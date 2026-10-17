@@ -1,0 +1,73 @@
+# Tile-level options (per tile in the layout editor).
+# The user sets these when placing the JARVIS Avatar tile on their screen.
+
+plugin:
+  name: JARVIS Avatar
+  id: jarvis-avatar
+  version: 0.1.0
+  min_api: "0.10"
+
+# The tile memory layout: what the plugin stores per tile instance.
+tile:
+  memory:
+    # Entity that provides the voice pipeline state.
+    # Best: an input_text helper updated by HA automations when voice state changes.
+    - id: entity
+      type: entity_id
+      default: ""
+      name:
+        en: "Voice state entity"
+      description:
+        en: "An input_text or sensor that holds the voice assistant state (idle/listening/processing/speaking/error/sleep)."
+
+    # Visual style of the avatar face.
+    - id: style
+      type: select
+      default: "minimal"
+      options:
+        - value: "minimal"
+          name:
+            en: "Minimal circle"
+        - value: "hex"
+          name:
+            en: "Hexagonal (Iron Man-esque)"
+        - value: "orb"
+          name:
+            en: "Glowing orb"
+      name:
+        en: "Avatar style"
+      description:
+        en: "The visual style of the face."
+
+    # Whether the avatar responds to taps.
+    - id: tappable
+      type: switch
+      default: true
+      name:
+        en: "Tap to wake"
+      description:
+        en: "Tap the avatar to trigger a wake animation."
+
+# Size definitions: what each tile size shows.
+sizes:
+  1x1:
+    description:
+      en: "The face, its state colour ring, and a small state icon."
+  2x1:
+    description:
+      en: "The face with state ring, state name text below."
+  1x2:
+    description:
+      en: "Larger face, state name and animated details."
+  2x2:
+    description:
+      en: "Full face, state name, last command text, and glow effects."
+  2x3:
+    description:
+      en: "Full face, state history, last commands, and animated halo."
+
+# The tile asks Home Assistant for these when polling.
+poll:
+  - service: state.get
+    entity: entity
+    attributes: ["state"]
