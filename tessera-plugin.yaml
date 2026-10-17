@@ -1,73 +1,46 @@
-# Tile-level options (per tile in the layout editor).
-# The user sets these when placing the JARVIS Avatar tile on their screen.
+# Tessera plugin manifest for JARVIS Avatar.
+# Every name and label is a key into translations/<language>.json, part "app".
+# See docs/MANIFEST.md in the plugins repository for full documentation.
 
-plugin:
-  name: JARVIS Avatar
-  id: jarvis-avatar
-  version: 0.1.0
-  min_api: "0.10"
+id: jarvis-avatar
+version: 0.1.0
+api: "0.10"
+icon: circle-user
+maintainer: quanghoster
+license: MIT
+stage: beta
+topics: [voice]
+requires:
+  esphome: 2026.6.2
+boards: any
+flash_kb: 18
 
-# The tile memory layout: what the plugin stores per tile instance.
-tile:
-  memory:
-    # Entity that provides the voice pipeline state.
-    # Best: an input_text helper updated by HA automations when voice state changes.
-    - id: entity
-      type: entity_id
-      default: ""
-      name:
-        en: "Voice state entity"
-      description:
-        en: "An input_text or sensor that holds the voice assistant state (idle/listening/processing/speaking/error/sleep)."
+permissions:
+  # The tile asks for the current state of its voice state entity.
+  ha_commands: ["state/get"]
+  # Tap-to-wake fires an event back to Home Assistant.
+  home_assistant_actions: [event.fire]
 
-    # Visual style of the avatar face.
-    - id: style
-      type: select
-      default: "minimal"
-      options:
-        - value: "minimal"
-          name:
-            en: "Minimal circle"
-        - value: "hex"
-          name:
-            en: "Hexagonal (Iron Man-esque)"
-        - value: "orb"
-          name:
-            en: "Glowing orb"
-      name:
-        en: "Avatar style"
-      description:
-        en: "The visual style of the face."
+tiles:
+  - id: avatar
+    name: tile_name
+    icon: circle-user
+    sizes: { min: 1x1, max: 2x2, full: false }
+    memory: 2400
+    domains: [input_text, sensor]
+    attributes: [state]
+    example: tile_example
+    preview: { title: "{name}", value: "{state}" }
+    options:
+      - { id: entity, kind: text, label: entity_label, hint: entity_hint }
+      - { id: style, kind: choice, label: style_label, hint: style_hint, default: reactor, choices: [
+          { value: reactor, label: style_reactor },
+          { value: minimal, label: style_minimal },
+          { value: hex, label: style_hex }
+        ]}
+      - { id: tappable, kind: switch, label: tappable_label, hint: tappable_hint, default: true }
 
-    # Whether the avatar responds to taps.
-    - id: tappable
-      type: switch
-      default: true
-      name:
-        en: "Tap to wake"
-      description:
-        en: "Tap the avatar to trigger a wake animation."
-
-# Size definitions: what each tile size shows.
-sizes:
-  1x1:
-    description:
-      en: "The face, its state colour ring, and a small state icon."
-  2x1:
-    description:
-      en: "The face with state ring, state name text below."
-  1x2:
-    description:
-      en: "Larger face, state name and animated details."
-  2x2:
-    description:
-      en: "Full face, state name, last command text, and glow effects."
-  2x3:
-    description:
-      en: "Full face, state history, last commands, and animated halo."
-
-# The tile asks Home Assistant for these when polling.
-poll:
-  - service: state.get
-    entity: entity
-    attributes: ["state"]
+settings:
+  - { key: demo, label: setting_demo, hint: setting_demo_hint }
+  - { key: poll, label: setting_poll, hint: setting_poll_hint }
+  - { key: state, label: setting_state, hint: setting_state_hint }
