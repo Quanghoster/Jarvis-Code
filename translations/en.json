@@ -1,5 +1,6 @@
 {
   "app": {
+    "name": "JARVIS Avatar",
     "plugin_name": "JARVIS Avatar",
     "plugin_description": "An animated reactor avatar that shows the Home Assistant voice assistant pipeline state.",
     "tile_name": "Avatar",
