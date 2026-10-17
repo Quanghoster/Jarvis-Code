@@ -1,7 +1,7 @@
 #pragma once
-// The JARVIS face: a circular avatar drawn with LVGL objects in a square.
-// Its expression follows the voice pipeline state, with idle ambient animations,
-// listening pulse, processing dots, speaking mouth movement, and error confusion.
+// The JARVIS Reactor Avatar: a circular reactor core with concentric glowing rings,
+// inspired by the Iron Man arc reactor and the View Assist dashboard design.
+// Its glow and pulse follow the voice assistant pipeline state.
 //
 // Adapted from microplant_avatar.h
 
@@ -21,11 +21,11 @@ class JarvisAvatar {
   // Colours for light/dark theme.
   void on_theme();
 
-  // Once a second: blink, pulse, processing dot cycle, etc.
+  // Once a second: pulse, ring rotation, etc.
   // `quiet` (standby) keeps it still.
   void on_tick(uint32_t epoch, bool quiet);
 
-  // Wake-up animation: brief flourish.
+  // Wake-up animation: bright flash and ring expansion.
   void wake();
 
   // Whether a point lies on the avatar (with touch margin).
@@ -33,31 +33,29 @@ class JarvisAvatar {
 
   bool made() const { return root_ != nullptr; }
 
-  struct Expression;  // how the face looks in each state (jarvis_avatar.cpp)
-
  private:
-  void apply(const Expression &expr);
-  void place_arc(lv_obj_t *arc, int start, int end);
-  void place_line(lv_obj_t *line, lv_point_precise_t *points, int count);
+  void apply_state(VoiceState state);
+  void start_pulse_animation();
+  void start_ring_animation();
+  void stop_animations();
   int at(float unit) const { return static_cast<int>(unit * size_ + 0.5f); }
 
-  // Object hierarchy
+  // Object hierarchy - reactor style
   lv_obj_t *root_{};
-  lv_obj_t *face_{};           // background circle
-  lv_obj_t *ring_{};           // outer glow ring
-  lv_obj_t *eye_l_{}, *eye_r_{};  // two eyes (circles)
-  lv_obj_t *brow_l_{}, *brow_r_{}; // eyebrow lines
-  lv_obj_t *mouth_{};          // mouth polyline
-  lv_obj_t *dot_l_{}, *dot_c_{}, *dot_r_{}; // processing dots
-  lv_obj_t *glyph_{};          // text glyph (?, !, ...)
-  lv_obj_t *core_{};           // centre glow dot
+  lv_obj_t *outer_ring_{};     // Outermost glow ring
+  lv_obj_t *mid_ring_{};       // Middle ring (rotating)
+  lv_obj_t *inner_ring_{};     // Inner decorative ring
+  lv_obj_t *core_{};           // Central reactor core
+  lv_obj_t *core_highlight_{}; // Core highlight spot
+  lv_obj_t *glow_overlay_{};   // Ambient glow behind
 
-  // Mouth point storage
-  lv_point_precise_t mouth_pts_[5]{};
+  // State indicators
+  lv_obj_t *status_dot_{};     // Small status indicator
+  lv_obj_t *voice_bars_[5]{};  // Voice visualiser bars (for speaking state)
 
-  int x_ = 0, y_ = 0, size_ = 0, eye_size_ = 0;
+  int x_ = 0, y_ = 0, size_ = 0;
   VoiceState state_ = VoiceState::UNKNOWN;
-  uint8_t expr_idx_ = 0;       // for cycling through expression variations
+  uint32_t last_tick_ = 0;
   bool expressed_ = false;
 };
 
