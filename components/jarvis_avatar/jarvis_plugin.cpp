@@ -8,18 +8,18 @@ using namespace tessera;
 
 // ---- Plugin setup ----
 
-void JarvisAvatarPlugin::setup() {
+void JarvisAvatar::setup() {
   // Register with Tessera's smart display system
   // The plugin manifest is read from the directory beside __init__.py
 }
 
-void JarvisAvatarPlugin::loop() {
+void JarvisAvatar::loop() {
   // Most work is event-driven; periodic polling happens in on_tile_tick
 }
 
 // ---- Tile lifecycle ----
 
-void JarvisAvatarPlugin::on_tile_create(TileHandle tile) {
+void JarvisAvatar::on_tile_create(TileHandle tile) {
   auto *avatar = tile->alloc_user_data<JarvisAvatar>();
   if (!avatar) return;
 
@@ -42,14 +42,14 @@ void JarvisAvatarPlugin::on_tile_create(TileHandle tile) {
   last_answer_ = 0;
 }
 
-void JarvisAvatarPlugin::on_tile_destroy(TileHandle tile) {
+void JarvisAvatar::on_tile_destroy(TileHandle tile) {
   // LVGL objects are cleaned up by Tessera; our avatar destructor is trivial
   tile->free_user_data();
 }
 
 // ---- Periodic updates ----
 
-void JarvisAvatarPlugin::on_tile_tick(TileHandle tile, uint32_t epoch, bool quiet) {
+void JarvisAvatar::on_tile_tick(TileHandle tile, uint32_t epoch, bool quiet) {
   auto *avatar = tile->user_data<JarvisAvatar>();
   if (!avatar || !avatar->made()) return;
 
@@ -84,7 +84,7 @@ void JarvisAvatarPlugin::on_tile_tick(TileHandle tile, uint32_t epoch, bool quie
 
 // ---- Home Assistant interaction ----
 
-void JarvisAvatarPlugin::ask_home_assistant(TileHandle tile) {
+void JarvisAvatar::ask_home_assistant(TileHandle tile) {
   // Get the entity configured for this tile
   const char *entity = tile->option_string("entity");
   if (!entity || !*entity) {
@@ -102,7 +102,7 @@ void JarvisAvatarPlugin::ask_home_assistant(TileHandle tile) {
   });
 }
 
-void JarvisAvatarPlugin::apply_state(TileHandle tile, VoiceState state) {
+void JarvisAvatar::apply_state(TileHandle tile, VoiceState state) {
   auto *avatar = tile->user_data<JarvisAvatar>();
   if (!avatar) return;
 
@@ -118,7 +118,7 @@ void JarvisAvatarPlugin::apply_state(TileHandle tile, VoiceState state) {
 
 // ---- Touch interaction ----
 
-bool JarvisAvatarPlugin::on_tile_tap(TileHandle tile, int x, int y) {
+bool JarvisAvatar::on_tile_tap(TileHandle tile, int x, int y) {
   auto *avatar = tile->user_data<JarvisAvatar>();
   if (!avatar || !avatar->made()) return false;
 
@@ -143,7 +143,7 @@ bool JarvisAvatarPlugin::on_tile_tap(TileHandle tile, int x, int y) {
 
 // ---- Theme changes ----
 
-void JarvisAvatarPlugin::on_theme() {
+void JarvisAvatar::on_theme() {
   // Tessera calls this when light/dark mode switches
   // We iterate all tiles and update their avatar colours
   for_each_tile([](TileHandle tile) {
