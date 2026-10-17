@@ -1,0 +1,33 @@
+{
+  "plugin": {
+    "name": "JARVIS Avatar",
+    "description": "An animated avatar that shows the Home Assistant voice assistant pipeline state."
+  },
+  "settings": {
+    "demo": "Avatar demo mode",
+    "poll": "State poll seconds",
+    "state": "Voice state entity"
+  },
+  "tile": {
+    "entity": "Voice state entity",
+    "style": "Avatar style",
+    "tappable": "Tap to wake"
+  },
+  "states": {
+    "idle": "Idle",
+    "listening": "Listening",
+    "processing": "Processing",
+    "speaking": "Speaking",
+    "error": "Error",
+    "wake": "Wake",
+    "sleep": "Sleep",
+    "unknown": "Unknown"
+  },
+  "sizes": {
+    "1x1": "The face, its state colour ring, and a small state icon.",
+    "2x1": "The face with state ring, state name text below.",
+    "1x2": "Larger face, state name and animated details.",
+    "2x2": "Full face, state name, last command text, and glow effects.",
+    "2x3": "Full face, state history, last commands, and animated halo."
+  }
+}
