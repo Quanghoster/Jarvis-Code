@@ -1,41 +1,20 @@
 # Plugin-level settings (one per screen).
-# The screen owner sets these on the Plugins page of the screen or in Home Assistant.
+# These appear as entities in Home Assistant and on the screen's own settings page.
 
-plugin:
-  name: JARVIS Avatar
-  id: jarvis-avatar
-  version: 0.1.0
-  min_api: "0.10"
-  author: "JARVIS / Tessera"
-  description:
-    en: "An animated avatar that shows the Home Assistant voice assistant pipeline state."
-    
-# Settings that appear as entities in Home Assistant and on the screen's own settings page.
+id: jarvis-avatar
+version: 0.1.0
+api: "0.10"
+icon: circle-user
+maintainer: quanghoster
+license: MIT
+stage: beta
+topics: [voice]
+requires:
+  esphome: 2026.6.2
+boards: any
+flash_kb: 18
+
 settings:
-  - id: demo
-    type: switch
-    name:
-      en: "Avatar demo mode"
-    default: false
-    description:
-      en: "Cycle through all voice states for demonstration."
-
-  - id: poll
-    type: number
-    name:
-      en: "State poll seconds"
-    default: 2
-    min: 1
-    max: 10
-    step: 1
-    unit: s
-    description:
-      en: "How often to ask Home Assistant for the voice pipeline state."
-
-  - id: state
-    type: text
-    name:
-      en: "Voice state entity"
-    default: ""
-    description:
-      en: "Entity ID of an input_text that holds the current voice state (idle/listening/processing/speaking/error). Leave empty to use demo mode."
+  - { key: demo, label: setting_demo, hint: setting_demo_hint, kind: switch, default: false }
+  - { key: poll, label: setting_poll, hint: setting_poll_hint, kind: number, default: 2, min: 1, max: 10, unit: s }
+  - { key: state, label: setting_state, hint: setting_state_hint, kind: text, default: "" }
