@@ -1,33 +1,31 @@
 {
-  "plugin": {
-    "name": "JARVIS Avatar",
-    "description": "An animated avatar that shows the Home Assistant voice assistant pipeline state."
-  },
-  "settings": {
-    "demo": "Avatar demo mode",
-    "poll": "State poll seconds",
-    "state": "Voice state entity"
-  },
-  "tile": {
-    "entity": "Voice state entity",
-    "style": "Avatar style",
-    "tappable": "Tap to wake"
-  },
-  "states": {
-    "idle": "Idle",
-    "listening": "Listening",
-    "processing": "Processing",
-    "speaking": "Speaking",
-    "error": "Error",
-    "wake": "Wake",
-    "sleep": "Sleep",
-    "unknown": "Unknown"
-  },
-  "sizes": {
-    "1x1": "The face, its state colour ring, and a small state icon.",
-    "2x1": "The face with state ring, state name text below.",
-    "1x2": "Larger face, state name and animated details.",
-    "2x2": "Full face, state name, last command text, and glow effects.",
-    "2x3": "Full face, state history, last commands, and animated halo."
+  "app": {
+    "plugin_name": "JARVIS Avatar",
+    "plugin_description": "An animated reactor avatar that shows the Home Assistant voice assistant pipeline state.",
+    "tile_name": "Avatar",
+    "tile_example": "JARVIS Avatar",
+    "entity_label": "Voice state entity",
+    "entity_hint": "An input_text or sensor that holds the voice assistant state.",
+    "style_label": "Avatar style",
+    "style_hint": "The visual style of the reactor face.",
+    "style_reactor": "Reactor (Iron Man)",
+    "style_minimal": "Minimal circle",
+    "style_hex": "Hexagonal",
+    "tappable_label": "Tap to wake",
+    "tappable_hint": "Tap the avatar to trigger a wake animation.",
+    "setting_demo": "Avatar demo mode",
+    "setting_demo_hint": "Cycle through all voice states for demonstration.",
+    "setting_poll": "State poll seconds",
+    "setting_poll_hint": "How often to ask Home Assistant for the voice pipeline state.",
+    "setting_state": "Voice state entity",
+    "setting_state_hint": "Entity ID of an input_text that holds the current voice state. Leave empty to use demo mode.",
+    "state_idle": "Idle",
+    "state_listening": "Listening",
+    "state_processing": "Processing",
+    "state_speaking": "Speaking",
+    "state_error": "Error",
+    "state_wake": "Wake",
+    "state_sleep": "Sleep",
+    "state_unknown": "Unknown"
   }
 }
