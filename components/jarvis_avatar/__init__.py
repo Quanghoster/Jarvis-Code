@@ -15,7 +15,7 @@ CONF_POLL = "poll"
 CONF_STATE = "state"
 
 jarvis_ns = cg.esphome_ns.namespace("jarvis_avatar")
-JarvisAvatar = jarvis_ns.class_("JarvisAvatarPlugin", cg.Component)
+JarvisAvatar = jarvis_ns.class_("JarvisAvatar", cg.Component)
 
 CONFIG_SCHEMA = cv.Schema(
     {
