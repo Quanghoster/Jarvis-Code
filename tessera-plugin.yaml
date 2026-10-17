@@ -38,7 +38,7 @@ tiles:
           { value: minimal, label: style_minimal },
           { value: hex, label: style_hex }
         ]}
-      - { id: tappable, kind: switch, label: tappable_label, hint: tappable_hint, default: true }
+      - { id: tappable, kind: toggle, label: tappable_label, hint: tappable_hint, default: true }
 
 settings:
   - { key: demo, label: setting_demo, hint: setting_demo_hint }
