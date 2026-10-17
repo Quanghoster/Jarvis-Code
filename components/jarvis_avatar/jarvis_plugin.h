@@ -14,7 +14,7 @@
 
 namespace esphome::jarvis_avatar {
 
-class JarvisAvatarPlugin : public Component, public tessera::Plugin {
+class JarvisAvatar : public Component, public tessera::Plugin {
  public:
   void setup() override;
   void loop() override;
