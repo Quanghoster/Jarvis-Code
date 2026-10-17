@@ -2,7 +2,7 @@
 # Every name and label is a key into translations/<language>.json, part "app".
 # See docs/MANIFEST.md in the plugins repository for full documentation.
 
-id: jarvis-avatar
+id: jarvis_avatar
 version: 0.1.0
 api: "0.10"
 icon: circle-user
