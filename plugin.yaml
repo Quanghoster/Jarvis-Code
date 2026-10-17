@@ -1,7 +1,7 @@
 # Plugin-level settings (one per screen).
 # These appear as entities in Home Assistant and on the screen's own settings page.
 
-id: jarvis-avatar
+id: jarvis_avatar
 version: 0.1.0
 api: "0.10"
 icon: circle-user
