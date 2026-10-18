@@ -8,7 +8,6 @@ namespace esphome::jarvis_reactor {
 namespace ui = tessera::ui;
 
 // ---- Colours matching the View Assist dashboard reactor ----
-// Use inline const instead of constexpr since lv_color_hex is not constexpr
 inline const lv_color_t CYAN = lv_color_hex(0x00D4FF);
 inline const lv_color_t CYAN_DIM = lv_color_hex(0x006680);
 inline const lv_color_t CORE_INNER = lv_color_hex(0xAADDFF);
@@ -21,6 +20,8 @@ inline const lv_color_t RED = lv_color_hex(0xFF3333);
 inline const lv_color_t GREEN = lv_color_hex(0x00FF66);
 inline const lv_color_t PURPLE = lv_color_hex(0xAA66FF);
 inline const lv_color_t OFF = lv_color_hex(0x112233);
+inline const lv_color_t DARK_BG = lv_color_hex(0x0A1428);
+inline const lv_color_t GLASS_BORDER = lv_color_hex(0x00D4FF);
 
 // ---- Voice state enum ----
 enum class VoiceState : uint8_t {
@@ -56,45 +57,72 @@ class ReactorTile : public tessera::Tile {
     height_ = c.height;
     const int cx = width_ / 2;
     const int cy = height_ / 2;
-    const int size = std::min(width_, height_);
+    // The reactor sits in a square, centred, using the smaller dimension
+    const int reactor_size = std::min(width_, height_);
+    const float s = reactor_size / 120.0f;  // scale factor based on 120px base
 
-    // Ambient glow overlay
+    // Dark glass background (like dashboard panels)
+    bg_ = lv_obj_create(c.parent);
+    lv_obj_remove_style_all(bg_);
+    lv_obj_remove_flag(bg_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_obj_set_style_radius(bg_, 12, 0);
+    lv_obj_set_style_bg_color(bg_, DARK_BG, 0);
+    lv_obj_set_style_bg_opa(bg_, LV_OPA_40, 0);
+    lv_obj_set_style_border_color(bg_, GLASS_BORDER, 0);
+    lv_obj_set_style_border_width(bg_, 1, 0);
+    lv_obj_set_style_border_opa(bg_, LV_OPA_30, 0);
+    lv_obj_set_size(bg_, width_, height_);
+    lv_obj_set_pos(bg_, 0, 0);
+
+    // Top accent line (like dashboard panels)
+    accent_ = lv_obj_create(c.parent);
+    lv_obj_remove_style_all(accent_);
+    lv_obj_remove_flag(accent_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_obj_set_style_bg_color(accent_, CYAN, 0);
+    lv_obj_set_style_bg_opa(accent_, LV_OPA_60, 0);
+    lv_obj_set_size(accent_, width_, 1);
+    lv_obj_set_pos(accent_, 0, 0);
+
+    // Ambient glow overlay (large soft glow behind reactor)
     glow_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(glow_);
     lv_obj_remove_flag(glow_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(glow_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(glow_, CYAN, 0);
     lv_obj_set_style_bg_opa(glow_, LV_OPA_10, 0);
-    lv_obj_set_size(glow_, static_cast<lv_coord_t>(size * 1.4f), static_cast<lv_coord_t>(size * 1.4f));
-    lv_obj_set_pos(glow_, cx - static_cast<lv_coord_t>(size * 0.7f), cy - static_cast<lv_coord_t>(size * 0.7f));
+    const int glow_d = static_cast<int>(reactor_size * 1.2f);
+    lv_obj_set_size(glow_, glow_d, glow_d);
+    lv_obj_set_pos(glow_, cx - glow_d / 2, cy - glow_d / 2 - static_cast<int>(10 * s));
     lv_obj_set_style_shadow_color(glow_, CYAN, 0);
-    lv_obj_set_style_shadow_width(glow_, static_cast<lv_coord_t>(size * 0.3f), 0);
+    lv_obj_set_style_shadow_width(glow_, static_cast<lv_coord_t>(40 * s), 0);
     lv_obj_set_style_shadow_opa(glow_, LV_OPA_30, 0);
 
-    // Outer ring
+    // Outer ring (main glow ring like dashboard)
     outer_ring_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(outer_ring_);
     lv_obj_remove_flag(outer_ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(outer_ring_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_border_color(outer_ring_, RING_BORDER, 0);
-    lv_obj_set_style_border_width(outer_ring_, std::max(2, static_cast<int>(size * 0.04f)), 0);
+    lv_obj_set_style_border_width(outer_ring_, std::max(2, static_cast<int>(3 * s)), 0);
     lv_obj_set_style_border_opa(outer_ring_, LV_OPA_60, 0);
     lv_obj_set_style_shadow_color(outer_ring_, CYAN, 0);
-    lv_obj_set_style_shadow_width(outer_ring_, static_cast<lv_coord_t>(size * 0.15f), 0);
+    lv_obj_set_style_shadow_width(outer_ring_, static_cast<lv_coord_t>(20 * s), 0);
     lv_obj_set_style_shadow_opa(outer_ring_, LV_OPA_50, 0);
-    lv_obj_set_size(outer_ring_, static_cast<lv_coord_t>(size * 0.95f), static_cast<lv_coord_t>(size * 0.95f));
-    lv_obj_set_pos(outer_ring_, cx - static_cast<lv_coord_t>(size * 0.475f), cy - static_cast<lv_coord_t>(size * 0.475f));
+    const int outer_d = static_cast<int>(reactor_size * 0.85f);
+    lv_obj_set_size(outer_ring_, outer_d, outer_d);
+    lv_obj_set_pos(outer_ring_, cx - outer_d / 2, cy - outer_d / 2 - static_cast<int>(10 * s));
 
-    // Middle ring
+    // Middle ring (decorative, thinner)
     mid_ring_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(mid_ring_);
     lv_obj_remove_flag(mid_ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(mid_ring_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_border_color(mid_ring_, RING_DIM, 0);
-    lv_obj_set_style_border_width(mid_ring_, std::max(1, static_cast<int>(size * 0.025f)), 0);
+    lv_obj_set_style_border_width(mid_ring_, std::max(1, static_cast<int>(2 * s)), 0);
     lv_obj_set_style_border_opa(mid_ring_, LV_OPA_40, 0);
-    lv_obj_set_size(mid_ring_, static_cast<lv_coord_t>(size * 0.78f), static_cast<lv_coord_t>(size * 0.78f));
-    lv_obj_set_pos(mid_ring_, cx - static_cast<lv_coord_t>(size * 0.39f), cy - static_cast<lv_coord_t>(size * 0.39f));
+    const int mid_d = static_cast<int>(reactor_size * 0.70f);
+    lv_obj_set_size(mid_ring_, mid_d, mid_d);
+    lv_obj_set_pos(mid_ring_, cx - mid_d / 2, cy - mid_d / 2 - static_cast<int>(10 * s));
 
     // Inner ring
     inner_ring_ = lv_obj_create(c.parent);
@@ -102,47 +130,70 @@ class ReactorTile : public tessera::Tile {
     lv_obj_remove_flag(inner_ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(inner_ring_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_border_color(inner_ring_, RING_BORDER, 0);
-    lv_obj_set_style_border_width(inner_ring_, std::max(1, static_cast<int>(size * 0.02f)), 0);
+    lv_obj_set_style_border_width(inner_ring_, std::max(1, static_cast<int>(1.5f * s)), 0);
     lv_obj_set_style_border_opa(inner_ring_, LV_OPA_30, 0);
-    lv_obj_set_size(inner_ring_, static_cast<lv_coord_t>(size * 0.62f), static_cast<lv_coord_t>(size * 0.62f));
-    lv_obj_set_pos(inner_ring_, cx - static_cast<lv_coord_t>(size * 0.31f), cy - static_cast<lv_coord_t>(size * 0.31f));
+    const int inner_d = static_cast<int>(reactor_size * 0.55f);
+    lv_obj_set_size(inner_ring_, inner_d, inner_d);
+    lv_obj_set_pos(inner_ring_, cx - inner_d / 2, cy - inner_d / 2 - static_cast<int>(10 * s));
 
-    // Central core
+    // Central core (the reactor core)
     core_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(core_);
     lv_obj_remove_flag(core_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(core_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(core_, CORE_MID, 0);
     lv_obj_set_style_shadow_color(core_, CYAN, 0);
-    lv_obj_set_style_shadow_width(core_, static_cast<lv_coord_t>(size * 0.2f), 0);
+    lv_obj_set_style_shadow_width(core_, static_cast<lv_coord_t>(25 * s), 0);
     lv_obj_set_style_shadow_opa(core_, LV_OPA_60, 0);
-    lv_obj_set_size(core_, static_cast<lv_coord_t>(size * 0.45f), static_cast<lv_coord_t>(size * 0.45f));
-    lv_obj_set_pos(core_, cx - static_cast<lv_coord_t>(size * 0.225f), cy - static_cast<lv_coord_t>(size * 0.225f));
+    const int core_d = static_cast<int>(reactor_size * 0.40f);
+    lv_obj_set_size(core_, core_d, core_d);
+    lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2 - static_cast<int>(10 * s));
 
-    // Core highlight
+    // Core highlight (bright spot)
     highlight_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(highlight_);
     lv_obj_remove_flag(highlight_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(highlight_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(highlight_, CORE_INNER, 0);
     lv_obj_set_style_opa(highlight_, LV_OPA_70, 0);
-    lv_obj_set_size(highlight_, static_cast<lv_coord_t>(size * 0.18f), static_cast<lv_coord_t>(size * 0.18f));
-    lv_obj_set_pos(highlight_, cx - static_cast<lv_coord_t>(size * 0.14f), cy - static_cast<lv_coord_t>(size * 0.14f));
+    const int hl_d = static_cast<int>(reactor_size * 0.15f);
+    lv_obj_set_size(highlight_, hl_d, hl_d);
+    lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(5 * s), cy - hl_d / 2 - static_cast<int>(15 * s));
 
-    // Status dot
+    // J.A.R.V.I.S. text label (like dashboard title)
+    // Use the largest available font that fits
+    tessera::Font title_font = (reactor_size >= 200) ? tessera::Font::HEADLINE :
+                               (reactor_size >= 100) ? tessera::Font::TITLE :
+                               tessera::Font::BODY;
+    title_ = ui::label(c.parent, title_font, theme::INK);
+    lv_obj_set_width(title_, width_);
+    lv_obj_set_style_text_align(title_, LV_TEXT_ALIGN_CENTER, 0);
+    ui::set_text(title_, "J.A.R.V.I.S.");
+    // Position below the reactor
+    const int title_y = cy + static_cast<int>(reactor_size * 0.42f);
+    lv_obj_set_pos(title_, 0, title_y);
+
+    // Subtitle / status text
+    subtitle_ = ui::label(c.parent, tessera::Font::BODY, theme::MUTED);
+    lv_obj_set_width(subtitle_, width_);
+    lv_obj_set_style_text_align(subtitle_, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_pos(subtitle_, 0, title_y + ui::line_height(title_font) + static_cast<int>(4 * s));
+
+    // Status dot (small indicator)
     status_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(status_);
     lv_obj_remove_flag(status_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(status_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(status_, OFF, 0);
     lv_obj_set_style_shadow_color(status_, OFF, 0);
-    lv_obj_set_style_shadow_width(status_, static_cast<lv_coord_t>(size * 0.05f), 0);
-    lv_obj_set_size(status_, static_cast<lv_coord_t>(size * 0.06f), static_cast<lv_coord_t>(size * 0.06f));
-    lv_obj_set_pos(status_, cx - static_cast<lv_coord_t>(size * 0.03f), cy + static_cast<lv_coord_t>(size * 0.35f));
+    lv_obj_set_style_shadow_width(status_, static_cast<lv_coord_t>(8 * s), 0);
+    const int sd_d = std::max(4, static_cast<int>(8 * s));
+    lv_obj_set_size(status_, sd_d, sd_d);
+    lv_obj_set_pos(status_, cx - sd_d / 2, title_y - static_cast<int>(12 * s));
 
-    // Voice visualiser bars (hidden by default)
-    const int bar_w = std::max(2, static_cast<int>(size * 0.025f));
-    const int bar_gap = std::max(3, static_cast<int>(size * 0.04f));
+    // Voice visualiser bars (hidden by default, shown when speaking)
+    const int bar_w = std::max(2, static_cast<int>(4 * s));
+    const int bar_gap = std::max(3, static_cast<int>(6 * s));
     for (int i = 0; i < 5; ++i) {
       bars_[i] = lv_obj_create(c.parent);
       lv_obj_remove_style_all(bars_[i]);
@@ -152,22 +203,23 @@ class ReactorTile : public tessera::Tile {
       lv_obj_set_size(bars_[i], bar_w, 2);
       lv_obj_set_pos(bars_[i],
                       cx - (2 * bar_gap + 2 * bar_w) + i * (bar_w + bar_gap),
-                      cy + static_cast<lv_coord_t>(size * 0.42f));
+                      title_y - static_cast<int>(8 * s));
       lv_obj_set_style_opa(bars_[i], LV_OPA_TRANSP, 0);
     }
 
     state_ = VoiceState::IDLE;
     apply_state(state_);
+    update_subtitle();
   }
 
   void on_state(JsonObjectConst data) override {
-    // Check if state key exists using modern ArduinoJson API
     if (data["state"].is<const char*>()) {
       const char *state_text = data["state"];
       VoiceState new_state = parse_state(state_text);
       if (new_state != state_) {
         state_ = new_state;
         apply_state(state_);
+        update_subtitle();
       }
     }
   }
@@ -178,7 +230,6 @@ class ReactorTile : public tessera::Tile {
     // Animate voice bars when speaking
     if (state_ == VoiceState::SPEAKING) {
       for (int i = 0; i < 5; ++i) {
-        // Use sin from cmath
         int h = 2 + static_cast<int>(12 * sin(static_cast<float>(epoch) * 0.5f + i * 1.2f));
         h = std::max(2, h);
         lv_obj_set_height(bars_[i], h);
@@ -195,11 +246,27 @@ class ReactorTile : public tessera::Tile {
   }
 
   void on_theme() override {
-    // Re-apply current state colours for light/dark theme
     apply_state(state_);
+    ui::set_color(title_, theme::INK);
+    ui::set_color(subtitle_, theme::MUTED);
   }
 
  private:
+  void update_subtitle() {
+    const char *text = "";
+    switch (state_) {
+      case VoiceState::IDLE: text = "System Online"; break;
+      case VoiceState::LISTENING: text = "Listening..."; break;
+      case VoiceState::PROCESSING: text = "Processing..."; break;
+      case VoiceState::SPEAKING: text = "Speaking..."; break;
+      case VoiceState::ERROR: text = "Error"; break;
+      case VoiceState::WAKE: text = "Wake"; break;
+      case VoiceState::SLEEP: text = "Sleep"; break;
+      case VoiceState::UNKNOWN: text = "Unknown"; break;
+    }
+    ui::set_text(subtitle_, text);
+  }
+
   void apply_state(VoiceState state) {
     lv_color_t ring_col = RING_BORDER;
     lv_color_t core_col = CORE_MID;
@@ -287,12 +354,16 @@ class ReactorTile : public tessera::Tile {
   const tessera::Plugin *plugin_;
   int width_ = 0, height_ = 0;
   VoiceState state_ = VoiceState::UNKNOWN;
+  lv_obj_t *bg_{};
+  lv_obj_t *accent_{};
   lv_obj_t *glow_{};
   lv_obj_t *outer_ring_{};
   lv_obj_t *mid_ring_{};
   lv_obj_t *inner_ring_{};
   lv_obj_t *core_{};
   lv_obj_t *highlight_{};
+  lv_obj_t *title_{};
+  lv_obj_t *subtitle_{};
   lv_obj_t *status_{};
   lv_obj_t *bars_[5]{};
 };
