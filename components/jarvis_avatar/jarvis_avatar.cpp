@@ -255,7 +255,7 @@ class ReactorTile : public tessera::Tile {
         core_col = OFF;
         status_col = PURPLE;
         core_opa = LV_OPA_30;
-        glow_opa = LV_OPA_5;
+        glow_opa = LV_OPA_10;
         break;
       case VoiceState::UNKNOWN:
       default:
