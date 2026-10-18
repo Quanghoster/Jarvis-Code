@@ -17,7 +17,7 @@ tiles:
   - id: avatar
     name: tile_name
     icon: circle-user
-    sizes: { min: 1x1, max: 2x2 }
+    sizes: { min: 1x1, max: 4x4, full: true }
     memory: 2400
     domains: [input_text, sensor]
     attributes: [state]
