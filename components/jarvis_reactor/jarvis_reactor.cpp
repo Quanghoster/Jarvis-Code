@@ -160,23 +160,24 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_size(highlight_, hl_d, hl_d);
     lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(5 * s), cy - hl_d / 2 - static_cast<int>(15 * s));
 
-    // J.A.R.V.I.S. text label (like dashboard title)
-    // Use the largest available font that fits
+    // J.A.R.V.I.S. text label — centred, bluish
     tessera::Font title_font = (reactor_size >= 200) ? tessera::Font::HEADLINE :
                                (reactor_size >= 100) ? tessera::Font::TITLE :
                                tessera::Font::BODY;
     title_ = ui::label(c.parent, title_font, theme::INK);
     lv_obj_set_width(title_, width_);
     lv_obj_set_style_text_align(title_, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(title_, CYAN, 0);  // bluish colour
     ui::set_text(title_, "J.A.R.V.I.S.");
-    // Position below the reactor
-    const int title_y = cy + static_cast<int>(reactor_size * 0.42f);
+    // Position: centred horizontally, below reactor but centred in lower portion
+    const int title_y = cy + static_cast<int>(reactor_size * 0.38f);
     lv_obj_set_pos(title_, 0, title_y);
 
-    // Subtitle / status text
+    // Subtitle / status text — centred, bluish-muted
     subtitle_ = ui::label(c.parent, tessera::Font::BODY, theme::MUTED);
     lv_obj_set_width(subtitle_, width_);
     lv_obj_set_style_text_align(subtitle_, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(subtitle_, CYAN_DIM, 0);  // bluish muted
     lv_obj_set_pos(subtitle_, 0, title_y + ui::line_height(title_font) + static_cast<int>(4 * s));
 
     // Status dot (small indicator)
@@ -227,6 +228,25 @@ class ReactorTile : public tessera::Tile {
   void on_tick(uint32_t epoch) override {
     if (!epoch) return;
 
+    // Subtle reactor breathing animation (idle pulse)
+    const float phase = static_cast<float>(epoch % 3) / 3.0f * 6.2831853f;  // 3-second cycle
+    const float breathe = 0.92f + 0.08f * sin(phase);  // scale 0.92-1.00
+    
+    // Apply breathing to core
+    const int core_base_d = lv_obj_get_width(core_);
+    const int core_new_d = static_cast<int>(core_base_d * breathe);
+    lv_obj_set_size(core_, core_new_d, core_new_d);
+    // Re-centre after resize
+    const int cx = width_ / 2;
+    const int cy = height_ / 2;
+    const int reactor_size = std::min(width_, height_);
+    const float s = reactor_size / 120.0f;
+    lv_obj_set_pos(core_, cx - core_new_d / 2, cy - core_new_d / 2 - static_cast<int>(10 * s));
+
+    // Subtle glow pulse on outer ring opacity
+    lv_opa_t ring_opa = static_cast<lv_opa_t>(LV_OPA_40 + LV_OPA_20 * sin(phase));
+    lv_obj_set_style_border_opa(outer_ring_, ring_opa, 0);
+
     // Animate voice bars when speaking
     if (state_ == VoiceState::SPEAKING) {
       for (int i = 0; i < 5; ++i) {
@@ -247,8 +267,9 @@ class ReactorTile : public tessera::Tile {
 
   void on_theme() override {
     apply_state(state_);
-    ui::set_color(title_, theme::INK);
-    ui::set_color(subtitle_, theme::MUTED);
+    // Keep text bluish even on theme change
+    lv_obj_set_style_text_color(title_, CYAN, 0);
+    lv_obj_set_style_text_color(subtitle_, CYAN_DIM, 0);
   }
 
  private:
@@ -349,6 +370,10 @@ class ReactorTile : public tessera::Tile {
     for (auto *bar : bars_) {
       lv_obj_set_style_opa(bar, (state == VoiceState::SPEAKING) ? LV_OPA_80 : LV_OPA_TRANSP, 0);
     }
+    
+    // Keep text bluish on state change
+    lv_obj_set_style_text_color(title_, CYAN, 0);
+    lv_obj_set_style_text_color(subtitle_, CYAN_DIM, 0);
   }
 
   const tessera::Plugin *plugin_;
