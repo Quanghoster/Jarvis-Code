@@ -1,20 +1,2 @@
-# Plugin-level settings (one per screen).
-# These appear as entities in Home Assistant and on the screen's own settings page.
-
-id: jarvis_avatar
-version: 0.1.0
-api: "0.10"
-icon: circle-user
-maintainer: quanghoster
-license: MIT
-stage: beta
-topics: [voice]
-requires:
-  esphome: 2026.6.2
-boards: any
-flash_kb: 18
-
-settings:
-  - { key: demo, label: setting_demo, hint: setting_demo_hint, kind: toggle, default: false }
-  - { key: poll, label: setting_poll, hint: setting_poll_hint, kind: number, default: 2, min: 1, max: 10, unit: s }
-  - { key: state, label: setting_state, hint: setting_state_hint, kind: text, default: "" }
+# What a screen gets when it takes this plugin: the component, configured.
+jarvis_avatar:
