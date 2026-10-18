@@ -1,15 +1,16 @@
 #include "jarvis_reactor.h"
 #include <cmath>
 #include <cstdint>
-#include <string>
+#include <cstring>
 
 namespace esphome::jarvis_reactor {
 
 namespace ui = tessera::ui;
 
-// ---- Colours matching the View Assist dashboard reactor ----
+// ---- Colours ----
 inline const lv_color_t CYAN = lv_color_hex(0x00D4FF);
 inline const lv_color_t CYAN_DIM = lv_color_hex(0x006680);
+inline const lv_color_t CYAN_GLOW = lv_color_hex(0x003344);
 inline const lv_color_t CORE_INNER = lv_color_hex(0xAADDFF);
 inline const lv_color_t CORE_MID = lv_color_hex(0x00D4FF);
 inline const lv_color_t CORE_OUTER = lv_color_hex(0x002244);
@@ -47,7 +48,7 @@ inline VoiceState parse_state(const char* text) {
   return VoiceState::UNKNOWN;
 }
 
-// ---- The tile: reactor avatar ----
+// ---- The tile: JARVIS HUD reactor ----
 class ReactorTile : public tessera::Tile {
  public:
   explicit ReactorTile(const tessera::Plugin *plugin) : plugin_(plugin) {}
@@ -57,144 +58,152 @@ class ReactorTile : public tessera::Tile {
     height_ = c.height;
     const int cx = width_ / 2;
     const int cy = height_ / 2;
-    // The reactor sits in a square, centred, using the smaller dimension
-    const int reactor_size = std::min(width_, height_);
-    const float s = reactor_size / 120.0f;  // scale factor based on 120px base
+    const int size = std::min(width_, height_);
+    const float s = size / 240.0f;  // scale based on 240px
 
-    // Dark glass background (like dashboard panels)
+    // Dark background
     bg_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(bg_);
     lv_obj_remove_flag(bg_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_obj_set_style_radius(bg_, 12, 0);
+    lv_obj_set_style_radius(bg_, 0, 0);
     lv_obj_set_style_bg_color(bg_, DARK_BG, 0);
-    lv_obj_set_style_bg_opa(bg_, LV_OPA_40, 0);
-    lv_obj_set_style_border_color(bg_, GLASS_BORDER, 0);
-    lv_obj_set_style_border_width(bg_, 1, 0);
-    lv_obj_set_style_border_opa(bg_, LV_OPA_30, 0);
+    lv_obj_set_style_bg_opa(bg_, LV_OPA_100, 0);
     lv_obj_set_size(bg_, width_, height_);
     lv_obj_set_pos(bg_, 0, 0);
 
-    // Top accent line (like dashboard panels)
-    accent_ = lv_obj_create(c.parent);
-    lv_obj_remove_style_all(accent_);
-    lv_obj_remove_flag(accent_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_obj_set_style_bg_color(accent_, CYAN, 0);
-    lv_obj_set_style_bg_opa(accent_, LV_OPA_60, 0);
-    lv_obj_set_size(accent_, width_, 1);
-    lv_obj_set_pos(accent_, 0, 0);
+    // Outer arc ring (large, segmented) - ARC 4
+    arc4_ = lv_arc_create(c.parent);
+    lv_obj_remove_flag(arc4_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_arc_set_range(arc4_, 0, 360);
+    lv_arc_set_value(arc4_, 280);  // partial arc
+    lv_arc_set_bg_angles(arc4_, 30, 310);
+    lv_obj_set_style_arc_color(arc4_, RING_DIM, 0);
+    lv_obj_set_style_arc_width(arc4_, std::max(1, static_cast<int>(2 * s)), 0);
+    lv_obj_set_style_arc_opa(arc4_, LV_OPA_30, 0);
+    lv_obj_set_size(arc4_, static_cast<lv_coord_t>(size * 0.95f), static_cast<lv_coord_t>(size * 0.95f));
+    lv_obj_set_pos(arc4_, cx - static_cast<lv_coord_t>(size * 0.475f), cy - static_cast<lv_coord_t>(size * 0.475f));
 
-    // Ambient glow overlay (large soft glow behind reactor)
-    glow_ = lv_obj_create(c.parent);
-    lv_obj_remove_style_all(glow_);
-    lv_obj_remove_flag(glow_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_obj_set_style_radius(glow_, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(glow_, CYAN, 0);
-    lv_obj_set_style_bg_opa(glow_, LV_OPA_10, 0);
-    const int glow_d = static_cast<int>(reactor_size * 1.2f);
-    lv_obj_set_size(glow_, glow_d, glow_d);
-    lv_obj_set_pos(glow_, cx - glow_d / 2, cy - glow_d / 2 - static_cast<int>(10 * s));
-    lv_obj_set_style_shadow_color(glow_, CYAN, 0);
-    lv_obj_set_style_shadow_width(glow_, static_cast<lv_coord_t>(40 * s), 0);
-    lv_obj_set_style_shadow_opa(glow_, LV_OPA_30, 0);
+    // Middle outer ring with tick marks - ARC 3
+    arc3_ = lv_arc_create(c.parent);
+    lv_obj_remove_flag(arc3_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_arc_set_range(arc3_, 0, 360);
+    lv_arc_set_value(arc3_, 340);
+    lv_arc_set_bg_angles(arc3_, 10, 350);
+    lv_obj_set_style_arc_color(arc3_, RING_BORDER, 0);
+    lv_obj_set_style_arc_width(arc3_, std::max(2, static_cast<int>(3 * s)), 0);
+    lv_obj_set_style_arc_opa(arc3_, LV_OPA_50, 0);
+    lv_obj_set_size(arc3_, static_cast<lv_coord_t>(size * 0.80f), static_cast<lv_coord_t>(size * 0.80f));
+    lv_obj_set_pos(arc3_, cx - static_cast<lv_coord_t>(size * 0.40f), cy - static_cast<lv_coord_t>(size * 0.40f));
 
-    // Outer ring (main glow ring like dashboard)
-    outer_ring_ = lv_obj_create(c.parent);
-    lv_obj_remove_style_all(outer_ring_);
-    lv_obj_remove_flag(outer_ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_obj_set_style_radius(outer_ring_, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_border_color(outer_ring_, RING_BORDER, 0);
-    lv_obj_set_style_border_width(outer_ring_, std::max(2, static_cast<int>(3 * s)), 0);
-    lv_obj_set_style_border_opa(outer_ring_, LV_OPA_60, 0);
-    lv_obj_set_style_shadow_color(outer_ring_, CYAN, 0);
-    lv_obj_set_style_shadow_width(outer_ring_, static_cast<lv_coord_t>(20 * s), 0);
-    lv_obj_set_style_shadow_opa(outer_ring_, LV_OPA_50, 0);
-    const int outer_d = static_cast<int>(reactor_size * 0.85f);
-    lv_obj_set_size(outer_ring_, outer_d, outer_d);
-    lv_obj_set_pos(outer_ring_, cx - outer_d / 2, cy - outer_d / 2 - static_cast<int>(10 * s));
+    // Tick marks around arc3 (simulated with small dots)
+    for (int i = 0; i < 12; ++i) {
+      ticks_[i] = lv_obj_create(c.parent);
+      lv_obj_remove_style_all(ticks_[i]);
+      lv_obj_remove_flag(ticks_[i], static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+      lv_obj_set_style_radius(ticks_[i], LV_RADIUS_CIRCLE, 0);
+      lv_obj_set_style_bg_color(ticks_[i], RING_DIM, 0);
+      lv_obj_set_style_bg_opa(ticks_[i], LV_OPA_40, 0);
+      const int td = std::max(2, static_cast<int>(3 * s));
+      lv_obj_set_size(ticks_[i], td, td);
+      // Position around the ring
+      float angle = (i * 30.0f) * 3.14159f / 180.0f;
+      int tx = cx + static_cast<int>((size * 0.40f) * cos(angle)) - td / 2;
+      int ty = cy + static_cast<int>((size * 0.40f) * sin(angle)) - td / 2;
+      lv_obj_set_pos(ticks_[i], tx, ty);
+    }
 
-    // Middle ring (decorative, thinner)
-    mid_ring_ = lv_obj_create(c.parent);
-    lv_obj_remove_style_all(mid_ring_);
-    lv_obj_remove_flag(mid_ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_obj_set_style_radius(mid_ring_, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_border_color(mid_ring_, RING_DIM, 0);
-    lv_obj_set_style_border_width(mid_ring_, std::max(1, static_cast<int>(2 * s)), 0);
-    lv_obj_set_style_border_opa(mid_ring_, LV_OPA_40, 0);
-    const int mid_d = static_cast<int>(reactor_size * 0.70f);
-    lv_obj_set_size(mid_ring_, mid_d, mid_d);
-    lv_obj_set_pos(mid_ring_, cx - mid_d / 2, cy - mid_d / 2 - static_cast<int>(10 * s));
+    // Inner ring - ARC 2
+    arc2_ = lv_arc_create(c.parent);
+    lv_obj_remove_flag(arc2_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_arc_set_range(arc2_, 0, 360);
+    lv_arc_set_value(arc2_, 300);
+    lv_arc_set_bg_angles(arc2_, 45, 315);
+    lv_obj_set_style_arc_color(arc2_, CYAN, 0);
+    lv_obj_set_style_arc_width(arc2_, std::max(2, static_cast<int>(2.5f * s)), 0);
+    lv_obj_set_style_arc_opa(arc2_, LV_OPA_60, 0);
+    lv_obj_set_size(arc2_, static_cast<lv_coord_t>(size * 0.65f), static_cast<lv_coord_t>(size * 0.65f));
+    lv_obj_set_pos(arc2_, cx - static_cast<lv_coord_t>(size * 0.325f), cy - static_cast<lv_coord_t>(size * 0.325f));
 
-    // Inner ring
-    inner_ring_ = lv_obj_create(c.parent);
-    lv_obj_remove_style_all(inner_ring_);
-    lv_obj_remove_flag(inner_ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_obj_set_style_radius(inner_ring_, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_border_color(inner_ring_, RING_BORDER, 0);
-    lv_obj_set_style_border_width(inner_ring_, std::max(1, static_cast<int>(1.5f * s)), 0);
-    lv_obj_set_style_border_opa(inner_ring_, LV_OPA_30, 0);
-    const int inner_d = static_cast<int>(reactor_size * 0.55f);
-    lv_obj_set_size(inner_ring_, inner_d, inner_d);
-    lv_obj_set_pos(inner_ring_, cx - inner_d / 2, cy - inner_d / 2 - static_cast<int>(10 * s));
+    // Hexagonal dots on arc2
+    for (int i = 0; i < 6; ++i) {
+      hex_dots_[i] = lv_obj_create(c.parent);
+      lv_obj_remove_style_all(hex_dots_[i]);
+      lv_obj_remove_flag(hex_dots_[i], static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+      lv_obj_set_style_radius(hex_dots_[i], LV_RADIUS_CIRCLE, 0);
+      lv_obj_set_style_bg_color(hex_dots_[i], CYAN, 0);
+      lv_obj_set_style_bg_opa(hex_dots_[i], LV_OPA_80, 0);
+      const int hd = std::max(3, static_cast<int>(4 * s));
+      lv_obj_set_size(hex_dots_[i], hd, hd);
+      float angle = (i * 60.0f + 45.0f) * 3.14159f / 180.0f;
+      int hx = cx + static_cast<int>((size * 0.325f) * cos(angle)) - hd / 2;
+      int hy = cy + static_cast<int>((size * 0.325f) * sin(angle)) - hd / 2;
+      lv_obj_set_pos(hex_dots_[i], hx, hy);
+    }
 
-    // Central core (the reactor core)
+    // Innermost ring - ARC 1 (close to core)
+    arc1_ = lv_arc_create(c.parent);
+    lv_obj_remove_flag(arc1_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_arc_set_range(arc1_, 0, 360);
+    lv_arc_set_value(arc1_, 270);
+    lv_arc_set_bg_angles(arc1_, 0, 270);
+    lv_obj_set_style_arc_color(arc1_, CYAN, 0);
+    lv_obj_set_style_arc_width(arc1_, std::max(2, static_cast<int>(2 * s)), 0);
+    lv_obj_set_style_arc_opa(arc1_, LV_OPA_70, 0);
+    lv_obj_set_size(arc1_, static_cast<lv_coord_t>(size * 0.50f), static_cast<lv_coord_t>(size * 0.50f));
+    lv_obj_set_pos(arc1_, cx - static_cast<lv_coord_t>(size * 0.25f), cy - static_cast<lv_coord_t>(size * 0.25f));
+
+    // Central core
     core_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(core_);
     lv_obj_remove_flag(core_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(core_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(core_, CORE_MID, 0);
     lv_obj_set_style_shadow_color(core_, CYAN, 0);
-    lv_obj_set_style_shadow_width(core_, static_cast<lv_coord_t>(25 * s), 0);
+    lv_obj_set_style_shadow_width(core_, static_cast<lv_coord_t>(20 * s), 0);
     lv_obj_set_style_shadow_opa(core_, LV_OPA_60, 0);
-    const int core_d = static_cast<int>(reactor_size * 0.40f);
+    const int core_d = static_cast<int>(size * 0.35f);
     lv_obj_set_size(core_, core_d, core_d);
-    lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2 - static_cast<int>(10 * s));
+    lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2);
 
-    // Core highlight (bright spot)
+    // Core highlight
     highlight_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(highlight_);
     lv_obj_remove_flag(highlight_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(highlight_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(highlight_, CORE_INNER, 0);
-    lv_obj_set_style_opa(highlight_, LV_OPA_70, 0);
-    const int hl_d = static_cast<int>(reactor_size * 0.15f);
+    lv_obj_set_style_opa(highlight_, LV_OPA_60, 0);
+    const int hl_d = static_cast<int>(size * 0.12f);
     lv_obj_set_size(highlight_, hl_d, hl_d);
-    lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(5 * s), cy - hl_d / 2 - static_cast<int>(15 * s));
+    lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(4 * s), cy - hl_d / 2 - static_cast<int>(10 * s));
 
-    // J.A.R.V.I.S. text label — centred, bluish
-    tessera::Font title_font = (reactor_size >= 200) ? tessera::Font::HEADLINE :
-                               (reactor_size >= 100) ? tessera::Font::TITLE :
+    // J.A.R.V.I.S. text — centred in the core
+    tessera::Font title_font = (size >= 200) ? tessera::Font::HEADLINE :
+                               (size >= 100) ? tessera::Font::TITLE :
                                tessera::Font::BODY;
     title_ = ui::label(c.parent, title_font, theme::INK);
     lv_obj_set_width(title_, width_);
     lv_obj_set_style_text_align(title_, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_color(title_, CYAN, 0);  // bluish colour
+    lv_obj_set_style_text_color(title_, CYAN, 0);
     ui::set_text(title_, "J.A.R.V.I.S.");
-    // Position: centred horizontally, below reactor but centred in lower portion
-    const int title_y = cy + static_cast<int>(reactor_size * 0.38f);
-    lv_obj_set_pos(title_, 0, title_y);
+    // Centre vertically and horizontally
+    const int text_y = cy - ui::line_height(title_font) / 2;
+    lv_obj_set_pos(title_, 0, text_y);
 
-    // Subtitle / status text — centred, bluish-muted
-    subtitle_ = ui::label(c.parent, tessera::Font::BODY, theme::MUTED);
-    lv_obj_set_width(subtitle_, width_);
-    lv_obj_set_style_text_align(subtitle_, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_style_text_color(subtitle_, CYAN_DIM, 0);  // bluish muted
-    lv_obj_set_pos(subtitle_, 0, title_y + ui::line_height(title_font) + static_cast<int>(4 * s));
-
-    // Status dot (small indicator)
+    // Status dot (small, above the reactor)
     status_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(status_);
     lv_obj_remove_flag(status_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
     lv_obj_set_style_radius(status_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(status_, OFF, 0);
     lv_obj_set_style_shadow_color(status_, OFF, 0);
-    lv_obj_set_style_shadow_width(status_, static_cast<lv_coord_t>(8 * s), 0);
-    const int sd_d = std::max(4, static_cast<int>(8 * s));
+    lv_obj_set_style_shadow_width(status_, static_cast<lv_coord_t>(6 * s), 0);
+    const int sd_d = std::max(3, static_cast<int>(6 * s));
     lv_obj_set_size(status_, sd_d, sd_d);
-    lv_obj_set_pos(status_, cx - sd_d / 2, title_y - static_cast<int>(12 * s));
+    lv_obj_set_pos(status_, cx - sd_d / 2, cy - static_cast<int>(size * 0.42f));
 
-    // Voice visualiser bars (hidden by default, shown when speaking)
-    const int bar_w = std::max(2, static_cast<int>(4 * s));
-    const int bar_gap = std::max(3, static_cast<int>(6 * s));
+    // Voice visualiser bars (hidden by default)
+    const int bar_w = std::max(2, static_cast<int>(3 * s));
+    const int bar_gap = std::max(3, static_cast<int>(5 * s));
     for (int i = 0; i < 5; ++i) {
       bars_[i] = lv_obj_create(c.parent);
       lv_obj_remove_style_all(bars_[i]);
@@ -204,13 +213,12 @@ class ReactorTile : public tessera::Tile {
       lv_obj_set_size(bars_[i], bar_w, 2);
       lv_obj_set_pos(bars_[i],
                       cx - (2 * bar_gap + 2 * bar_w) + i * (bar_w + bar_gap),
-                      title_y - static_cast<int>(8 * s));
+                      cy + static_cast<int>(size * 0.38f));
       lv_obj_set_style_opa(bars_[i], LV_OPA_TRANSP, 0);
     }
 
     state_ = VoiceState::IDLE;
     apply_state(state_);
-    update_subtitle();
   }
 
   void on_state(JsonObjectConst data) override {
@@ -220,7 +228,6 @@ class ReactorTile : public tessera::Tile {
       if (new_state != state_) {
         state_ = new_state;
         apply_state(state_);
-        update_subtitle();
       }
     }
   }
@@ -228,24 +235,24 @@ class ReactorTile : public tessera::Tile {
   void on_tick(uint32_t epoch) override {
     if (!epoch) return;
 
-    // Subtle reactor breathing animation (idle pulse)
-    const float phase = static_cast<float>(epoch % 3) / 3.0f * 6.2831853f;  // 3-second cycle
-    const float breathe = 0.92f + 0.08f * sin(phase);  // scale 0.92-1.00
-    
-    // Apply breathing to core
-    const int core_base_d = lv_obj_get_width(core_);
-    const int core_new_d = static_cast<int>(core_base_d * breathe);
-    lv_obj_set_size(core_, core_new_d, core_new_d);
-    // Re-centre after resize
+    // Reactor breathing animation
+    const float phase = static_cast<float>(epoch % 3) / 3.0f * 6.2831853f;
+    const float breathe = 0.93f + 0.07f * sin(phase);
+
+    // Pulse core size
+    const int core_base = std::min(width_, height_);
+    const float s = core_base / 240.0f;
+    const int core_d = static_cast<int>(core_base * 0.35f * breathe);
     const int cx = width_ / 2;
     const int cy = height_ / 2;
-    const int reactor_size = std::min(width_, height_);
-    const float s = reactor_size / 120.0f;
-    lv_obj_set_pos(core_, cx - core_new_d / 2, cy - core_new_d / 2 - static_cast<int>(10 * s));
+    lv_obj_set_size(core_, core_d, core_d);
+    lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2);
 
-    // Subtle glow pulse on outer ring opacity
-    lv_opa_t ring_opa = static_cast<lv_opa_t>(LV_OPA_40 + LV_OPA_20 * sin(phase));
-    lv_obj_set_style_border_opa(outer_ring_, ring_opa, 0);
+    // Pulse arc opacities
+    lv_opa_t arc_opa = static_cast<lv_opa_t>(LV_OPA_50 + LV_OPA_20 * sin(phase));
+    lv_obj_set_style_arc_opa(arc1_, arc_opa, 0);
+    lv_obj_set_style_arc_opa(arc2_, static_cast<lv_opa_t>(LV_OPA_40 + LV_OPA_20 * sin(phase + 1.0f)), 0);
+    lv_obj_set_style_arc_opa(arc3_, static_cast<lv_opa_t>(LV_OPA_30 + LV_OPA_20 * sin(phase + 2.0f)), 0);
 
     // Animate voice bars when speaking
     if (state_ == VoiceState::SPEAKING) {
@@ -267,134 +274,114 @@ class ReactorTile : public tessera::Tile {
 
   void on_theme() override {
     apply_state(state_);
-    // Keep text bluish even on theme change
     lv_obj_set_style_text_color(title_, CYAN, 0);
-    lv_obj_set_style_text_color(subtitle_, CYAN_DIM, 0);
   }
 
  private:
-  void update_subtitle() {
-    const char *text = "";
-    switch (state_) {
-      case VoiceState::IDLE: text = "System Online"; break;
-      case VoiceState::LISTENING: text = "Listening..."; break;
-      case VoiceState::PROCESSING: text = "Processing..."; break;
-      case VoiceState::SPEAKING: text = "Speaking..."; break;
-      case VoiceState::ERROR: text = "Error"; break;
-      case VoiceState::WAKE: text = "Wake"; break;
-      case VoiceState::SLEEP: text = "Sleep"; break;
-      case VoiceState::UNKNOWN: text = "Unknown"; break;
-    }
-    ui::set_text(subtitle_, text);
-  }
-
   void apply_state(VoiceState state) {
-    lv_color_t ring_col = RING_BORDER;
+    lv_color_t arc_col = RING_BORDER;
     lv_color_t core_col = CORE_MID;
     lv_color_t status_col = OFF;
     lv_opa_t core_opa = LV_OPA_80;
-    lv_opa_t glow_opa = LV_OPA_10;
 
     switch (state) {
       case VoiceState::IDLE:
-        ring_col = RING_BORDER;
+        arc_col = RING_BORDER;
         core_col = CORE_MID;
         status_col = CYAN_DIM;
         core_opa = LV_OPA_80;
-        glow_opa = LV_OPA_10;
         break;
       case VoiceState::LISTENING:
-        ring_col = GREEN;
+        arc_col = GREEN;
         core_col = GREEN;
         status_col = GREEN;
         core_opa = LV_OPA_100;
-        glow_opa = LV_OPA_30;
         break;
       case VoiceState::PROCESSING:
-        ring_col = AMBER;
+        arc_col = AMBER;
         core_col = AMBER;
         status_col = AMBER;
         core_opa = LV_OPA_90;
-        glow_opa = LV_OPA_20;
         break;
       case VoiceState::SPEAKING:
-        ring_col = CYAN;
+        arc_col = CYAN;
         core_col = CORE_INNER;
         status_col = CYAN;
         core_opa = LV_OPA_100;
-        glow_opa = LV_OPA_40;
         break;
       case VoiceState::ERROR:
-        ring_col = RED;
+        arc_col = RED;
         core_col = RED;
         status_col = RED;
         core_opa = LV_OPA_70;
-        glow_opa = LV_OPA_20;
         break;
       case VoiceState::WAKE:
-        ring_col = GREEN;
+        arc_col = GREEN;
         core_col = CORE_INNER;
         status_col = GREEN;
         core_opa = LV_OPA_100;
-        glow_opa = LV_OPA_50;
         break;
       case VoiceState::SLEEP:
-        ring_col = OFF;
+        arc_col = OFF;
         core_col = OFF;
         status_col = PURPLE;
         core_opa = LV_OPA_30;
-        glow_opa = LV_OPA_10;
         break;
       case VoiceState::UNKNOWN:
       default:
-        ring_col = RING_DIM;
+        arc_col = RING_DIM;
         core_col = OFF;
         status_col = OFF;
         core_opa = LV_OPA_50;
-        glow_opa = LV_OPA_10;
         break;
     }
 
-    // Apply colours
-    lv_obj_set_style_border_color(outer_ring_, ring_col, 0);
-    lv_obj_set_style_shadow_color(outer_ring_, ring_col, 0);
-    lv_obj_set_style_shadow_color(core_, core_col, 0);
+    // Apply colours to arcs
+    lv_obj_set_style_arc_color(arc1_, arc_col, 0);
+    lv_obj_set_style_arc_color(arc2_, arc_col, 0);
+    lv_obj_set_style_arc_color(arc3_, arc_col, 0);
+    lv_obj_set_style_arc_color(arc4_, arc_col, 0);
+
+    // Core
+    lv_obj_set_style_shadow_color(core_, arc_col, 0);
     lv_obj_set_style_bg_color(core_, core_col, 0);
     lv_obj_set_style_bg_color(highlight_, core_col, 0);
     lv_obj_set_style_bg_color(status_, status_col, 0);
     lv_obj_set_style_shadow_color(status_, status_col, 0);
     lv_obj_set_style_bg_opa(core_, core_opa, 0);
-    lv_obj_set_style_bg_opa(glow_, glow_opa, 0);
+
+    // Hex dots
+    for (auto *dot : hex_dots_) {
+      lv_obj_set_style_bg_color(dot, arc_col, 0);
+    }
 
     // Show/hide voice bars
     for (auto *bar : bars_) {
       lv_obj_set_style_opa(bar, (state == VoiceState::SPEAKING) ? LV_OPA_80 : LV_OPA_TRANSP, 0);
     }
-    
-    // Keep text bluish on state change
+
+    // Keep text bluish
     lv_obj_set_style_text_color(title_, CYAN, 0);
-    lv_obj_set_style_text_color(subtitle_, CYAN_DIM, 0);
   }
 
   const tessera::Plugin *plugin_;
   int width_ = 0, height_ = 0;
   VoiceState state_ = VoiceState::UNKNOWN;
   lv_obj_t *bg_{};
-  lv_obj_t *accent_{};
-  lv_obj_t *glow_{};
-  lv_obj_t *outer_ring_{};
-  lv_obj_t *mid_ring_{};
-  lv_obj_t *inner_ring_{};
+  lv_obj_t *arc1_{};
+  lv_obj_t *arc2_{};
+  lv_obj_t *arc3_{};
+  lv_obj_t *arc4_{};
+  lv_obj_t *ticks_[12]{};
+  lv_obj_t *hex_dots_[6]{};
   lv_obj_t *core_{};
   lv_obj_t *highlight_{};
   lv_obj_t *title_{};
-  lv_obj_t *subtitle_{};
   lv_obj_t *status_{};
   lv_obj_t *bars_[5]{};
 };
 
 void JarvisReactor::setup() {
-  // Register the tile with the manifest id
   add_tile("avatar", [this]() { return new ReactorTile(this); });
 }
 
