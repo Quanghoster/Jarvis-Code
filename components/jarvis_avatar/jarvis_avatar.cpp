@@ -1,23 +1,26 @@
 #include "jarvis_avatar.h"
+#include <cmath>
 #include <cstdint>
+#include <string>
 
 namespace esphome::jarvis_avatar {
 
 namespace ui = tessera::ui;
 
 // ---- Colours matching the View Assist dashboard reactor ----
-constexpr lv_color_t CYAN = lv_color_hex(0x00D4FF);
-constexpr lv_color_t CYAN_DIM = lv_color_hex(0x006680);
-constexpr lv_color_t CORE_INNER = lv_color_hex(0xAADDFF);
-constexpr lv_color_t CORE_MID = lv_color_hex(0x00D4FF);
-constexpr lv_color_t CORE_OUTER = lv_color_hex(0x002244);
-constexpr lv_color_t RING_BORDER = lv_color_hex(0x00D4FF);
-constexpr lv_color_t RING_DIM = lv_color_hex(0x0088AA);
-constexpr lv_color_t AMBER = lv_color_hex(0xFFAA00);
-constexpr lv_color_t RED = lv_color_hex(0xFF3333);
-constexpr lv_color_t GREEN = lv_color_hex(0x00FF66);
-constexpr lv_color_t PURPLE = lv_color_hex(0xAA66FF);
-constexpr lv_color_t OFF = lv_color_hex(0x112233);
+// Use inline const instead of constexpr since lv_color_hex is not constexpr
+inline const lv_color_t CYAN = lv_color_hex(0x00D4FF);
+inline const lv_color_t CYAN_DIM = lv_color_hex(0x006680);
+inline const lv_color_t CORE_INNER = lv_color_hex(0xAADDFF);
+inline const lv_color_t CORE_MID = lv_color_hex(0x00D4FF);
+inline const lv_color_t CORE_OUTER = lv_color_hex(0x002244);
+inline const lv_color_t RING_BORDER = lv_color_hex(0x00D4FF);
+inline const lv_color_t RING_DIM = lv_color_hex(0x0088AA);
+inline const lv_color_t AMBER = lv_color_hex(0xFFAA00);
+inline const lv_color_t RED = lv_color_hex(0xFF3333);
+inline const lv_color_t GREEN = lv_color_hex(0x00FF66);
+inline const lv_color_t PURPLE = lv_color_hex(0xAA66FF);
+inline const lv_color_t OFF = lv_color_hex(0x112233);
 
 // ---- Voice state enum ----
 enum class VoiceState : uint8_t {
@@ -26,7 +29,6 @@ enum class VoiceState : uint8_t {
 
 inline VoiceState parse_state(const char* text) {
   if (!text || !*text) return VoiceState::UNKNOWN;
-  // Simple lowercase comparison
   char low[32];
   size_t n = 0;
   for (; text[n] && n + 1 < sizeof(low); ++n) {
@@ -55,7 +57,6 @@ class ReactorTile : public tessera::Tile {
     const int cx = width_ / 2;
     const int cy = height_ / 2;
     const int size = std::min(width_, height_);
-    const float scale = size / 120.0f;  // base scale on 120px
 
     // Ambient glow overlay
     glow_ = lv_obj_create(c.parent);
@@ -64,10 +65,10 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_radius(glow_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(glow_, CYAN, 0);
     lv_obj_set_style_bg_opa(glow_, LV_OPA_10, 0);
-    lv_obj_set_size(glow_, size * 1.4f, size * 1.4f);
-    lv_obj_set_pos(glow_, cx - size * 0.7f, cy - size * 0.7f);
+    lv_obj_set_size(glow_, static_cast<lv_coord_t>(size * 1.4f), static_cast<lv_coord_t>(size * 1.4f));
+    lv_obj_set_pos(glow_, cx - static_cast<lv_coord_t>(size * 0.7f), cy - static_cast<lv_coord_t>(size * 0.7f));
     lv_obj_set_style_shadow_color(glow_, CYAN, 0);
-    lv_obj_set_style_shadow_width(glow_, size * 0.3f, 0);
+    lv_obj_set_style_shadow_width(glow_, static_cast<lv_coord_t>(size * 0.3f), 0);
     lv_obj_set_style_shadow_opa(glow_, LV_OPA_30, 0);
 
     // Outer ring
@@ -79,10 +80,10 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_border_width(outer_ring_, std::max(2, static_cast<int>(size * 0.04f)), 0);
     lv_obj_set_style_border_opa(outer_ring_, LV_OPA_60, 0);
     lv_obj_set_style_shadow_color(outer_ring_, CYAN, 0);
-    lv_obj_set_style_shadow_width(outer_ring_, size * 0.15f, 0);
+    lv_obj_set_style_shadow_width(outer_ring_, static_cast<lv_coord_t>(size * 0.15f), 0);
     lv_obj_set_style_shadow_opa(outer_ring_, LV_OPA_50, 0);
-    lv_obj_set_size(outer_ring_, size * 0.95f, size * 0.95f);
-    lv_obj_set_pos(outer_ring_, cx - size * 0.475f, cy - size * 0.475f);
+    lv_obj_set_size(outer_ring_, static_cast<lv_coord_t>(size * 0.95f), static_cast<lv_coord_t>(size * 0.95f));
+    lv_obj_set_pos(outer_ring_, cx - static_cast<lv_coord_t>(size * 0.475f), cy - static_cast<lv_coord_t>(size * 0.475f));
 
     // Middle ring
     mid_ring_ = lv_obj_create(c.parent);
@@ -92,8 +93,8 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_border_color(mid_ring_, RING_DIM, 0);
     lv_obj_set_style_border_width(mid_ring_, std::max(1, static_cast<int>(size * 0.025f)), 0);
     lv_obj_set_style_border_opa(mid_ring_, LV_OPA_40, 0);
-    lv_obj_set_size(mid_ring_, size * 0.78f, size * 0.78f);
-    lv_obj_set_pos(mid_ring_, cx - size * 0.39f, cy - size * 0.39f);
+    lv_obj_set_size(mid_ring_, static_cast<lv_coord_t>(size * 0.78f), static_cast<lv_coord_t>(size * 0.78f));
+    lv_obj_set_pos(mid_ring_, cx - static_cast<lv_coord_t>(size * 0.39f), cy - static_cast<lv_coord_t>(size * 0.39f));
 
     // Inner ring
     inner_ring_ = lv_obj_create(c.parent);
@@ -103,8 +104,8 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_border_color(inner_ring_, RING_BORDER, 0);
     lv_obj_set_style_border_width(inner_ring_, std::max(1, static_cast<int>(size * 0.02f)), 0);
     lv_obj_set_style_border_opa(inner_ring_, LV_OPA_30, 0);
-    lv_obj_set_size(inner_ring_, size * 0.62f, size * 0.62f);
-    lv_obj_set_pos(inner_ring_, cx - size * 0.31f, cy - size * 0.31f);
+    lv_obj_set_size(inner_ring_, static_cast<lv_coord_t>(size * 0.62f), static_cast<lv_coord_t>(size * 0.62f));
+    lv_obj_set_pos(inner_ring_, cx - static_cast<lv_coord_t>(size * 0.31f), cy - static_cast<lv_coord_t>(size * 0.31f));
 
     // Central core
     core_ = lv_obj_create(c.parent);
@@ -113,10 +114,10 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_radius(core_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(core_, CORE_MID, 0);
     lv_obj_set_style_shadow_color(core_, CYAN, 0);
-    lv_obj_set_style_shadow_width(core_, size * 0.2f, 0);
+    lv_obj_set_style_shadow_width(core_, static_cast<lv_coord_t>(size * 0.2f), 0);
     lv_obj_set_style_shadow_opa(core_, LV_OPA_60, 0);
-    lv_obj_set_size(core_, size * 0.45f, size * 0.45f);
-    lv_obj_set_pos(core_, cx - size * 0.225f, cy - size * 0.225f);
+    lv_obj_set_size(core_, static_cast<lv_coord_t>(size * 0.45f), static_cast<lv_coord_t>(size * 0.45f));
+    lv_obj_set_pos(core_, cx - static_cast<lv_coord_t>(size * 0.225f), cy - static_cast<lv_coord_t>(size * 0.225f));
 
     // Core highlight
     highlight_ = lv_obj_create(c.parent);
@@ -125,8 +126,8 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_radius(highlight_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(highlight_, CORE_INNER, 0);
     lv_obj_set_style_opa(highlight_, LV_OPA_70, 0);
-    lv_obj_set_size(highlight_, size * 0.18f, size * 0.18f);
-    lv_obj_set_pos(highlight_, cx - size * 0.14f, cy - size * 0.14f);
+    lv_obj_set_size(highlight_, static_cast<lv_coord_t>(size * 0.18f), static_cast<lv_coord_t>(size * 0.18f));
+    lv_obj_set_pos(highlight_, cx - static_cast<lv_coord_t>(size * 0.14f), cy - static_cast<lv_coord_t>(size * 0.14f));
 
     // Status dot
     status_ = lv_obj_create(c.parent);
@@ -135,9 +136,9 @@ class ReactorTile : public tessera::Tile {
     lv_obj_set_style_radius(status_, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(status_, OFF, 0);
     lv_obj_set_style_shadow_color(status_, OFF, 0);
-    lv_obj_set_style_shadow_width(status_, size * 0.05f, 0);
-    lv_obj_set_size(status_, size * 0.06f, size * 0.06f);
-    lv_obj_set_pos(status_, cx - size * 0.03f, cy + size * 0.35f);
+    lv_obj_set_style_shadow_width(status_, static_cast<lv_coord_t>(size * 0.05f), 0);
+    lv_obj_set_size(status_, static_cast<lv_coord_t>(size * 0.06f), static_cast<lv_coord_t>(size * 0.06f));
+    lv_obj_set_pos(status_, cx - static_cast<lv_coord_t>(size * 0.03f), cy + static_cast<lv_coord_t>(size * 0.35f));
 
     // Voice visualiser bars (hidden by default)
     const int bar_w = std::max(2, static_cast<int>(size * 0.025f));
@@ -151,24 +152,17 @@ class ReactorTile : public tessera::Tile {
       lv_obj_set_size(bars_[i], bar_w, 2);
       lv_obj_set_pos(bars_[i],
                       cx - (2 * bar_gap + 2 * bar_w) + i * (bar_w + bar_gap),
-                      cy + size * 0.42f);
+                      cy + static_cast<lv_coord_t>(size * 0.42f));
       lv_obj_set_style_opa(bars_[i], LV_OPA_TRANSP, 0);
     }
 
-    // Get initial state from entity if configured
-    const char *entity = c.options["entity"] | "";
-    if (entity && *entity) {
-      // Will be updated via on_state when data arrives
-      state_ = VoiceState::UNKNOWN;
-    } else {
-      state_ = VoiceState::IDLE;
-    }
+    state_ = VoiceState::IDLE;
     apply_state(state_);
   }
 
   void on_state(JsonObjectConst data) override {
-    // Parse state from entity data
-    if (data.containsKey("state")) {
+    // Check if state key exists using modern ArduinoJson API
+    if (data["state"].is<const char*>()) {
       const char *state_text = data["state"];
       VoiceState new_state = parse_state(state_text);
       if (new_state != state_) {
@@ -184,7 +178,8 @@ class ReactorTile : public tessera::Tile {
     // Animate voice bars when speaking
     if (state_ == VoiceState::SPEAKING) {
       for (int i = 0; i < 5; ++i) {
-        int h = 2 + static_cast<int>(12 * std::sin(epoch * 0.5f + i * 1.2f));
+        // Use sin from cmath
+        int h = 2 + static_cast<int>(12 * sin(static_cast<float>(epoch) * 0.5f + i * 1.2f));
         h = std::max(2, h);
         lv_obj_set_height(bars_[i], h);
         lv_obj_set_y(bars_[i], lv_obj_get_y(bars_[i]) + (lv_obj_get_height(bars_[i]) - h) / 2);
@@ -218,7 +213,7 @@ class ReactorTile : public tessera::Tile {
         core_col = CORE_MID;
         status_col = CYAN_DIM;
         core_opa = LV_OPA_80;
-        glow_opa = LV_OPA_15;
+        glow_opa = LV_OPA_10;
         break;
       case VoiceState::LISTENING:
         ring_col = GREEN;
@@ -232,14 +227,14 @@ class ReactorTile : public tessera::Tile {
         core_col = AMBER;
         status_col = AMBER;
         core_opa = LV_OPA_90;
-        glow_opa = LV_OPA_25;
+        glow_opa = LV_OPA_20;
         break;
       case VoiceState::SPEAKING:
         ring_col = CYAN;
         core_col = CORE_INNER;
         status_col = CYAN;
         core_opa = LV_OPA_100;
-        glow_opa = LV_OPA_35;
+        glow_opa = LV_OPA_40;
         break;
       case VoiceState::ERROR:
         ring_col = RED;
