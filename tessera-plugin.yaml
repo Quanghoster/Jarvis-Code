@@ -1,7 +1,5 @@
-# Tessera plugin manifest for JARVIS Avatar.
-# Every name and label is a key into translations/<language>.json, part "app".
-# See docs/MANIFEST.md in the plugins repository for full documentation.
-
+# The manifest: who made the plugin, what it may do, and what the Tessera app shows.
+# Every field is explained in docs/MANIFEST.md.
 id: jarvis_avatar
 version: 0.1.0
 api: "0.10"
@@ -15,32 +13,20 @@ requires:
 boards: any
 flash_kb: 18
 
-permissions:
-  # The tile asks for the current state of its voice state entity.
-  ha_commands: ["state/get"]
-  # Tap-to-wake fires an event back to Home Assistant.
-  home_assistant_actions: [event.fire]
-
 tiles:
   - id: avatar
     name: tile_name
     icon: circle-user
-    sizes: { min: 1x1, max: 2x2, full: false }
+    sizes: { min: 1x1, max: 2x2 }
     memory: 2400
     domains: [input_text, sensor]
     attributes: [state]
     example: tile_example
-    preview: { title: "{name}", value: "{state}" }
     options:
-      - { id: entity, kind: text, label: entity_label, hint: entity_hint }
-      - { id: style, kind: choice, label: style_label, hint: style_hint, default: reactor, choices: [
+      - { id: entity, kind: text, label: entity, hint: entity_hint }
+      - { id: style, kind: choice, label: style, hint: style_hint, default: reactor, choices: [
           { value: reactor, label: style_reactor },
           { value: minimal, label: style_minimal },
           { value: hex, label: style_hex }
         ]}
-      - { id: tappable, kind: toggle, label: tappable_label, hint: tappable_hint, default: true }
-
-settings:
-  - { key: demo, label: setting_demo, hint: setting_demo_hint }
-  - { key: poll, label: setting_poll, hint: setting_poll_hint }
-  - { key: state, label: setting_state, hint: setting_state_hint }
+      - { id: tappable, kind: toggle, label: tappable, hint: tappable_hint, default: true }
