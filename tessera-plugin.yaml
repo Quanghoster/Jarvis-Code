@@ -1,6 +1,6 @@
 # The manifest: who made the plugin, what it may do, and what the Tessera app shows.
 # Every field is explained in docs/MANIFEST.md.
-id: jarvis_avatar
+id: jarvis_reactor
 version: 0.1.0
 api: "0.10"
 icon: circle-user
