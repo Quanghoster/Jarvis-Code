@@ -1,44 +1,39 @@
 # JARVIS Avatar for Tessera
 
-An animated reactor avatar tile for [Tessera](https://tessera.one) smart home screens that visualises the Home Assistant voice assistant pipeline state.
+An animated avatar tile for [Tessera](https://tessera.one) smart home screens that visualises the Home Assistant voice assistant pipeline state.
 
-Inspired by the J.A.R.V.I.S. arc reactor from the Iron Man films — a glowing circular core with concentric rings that pulse and shift colour based on voice interaction state.
+Inspired by the J.A.R.V.I.S. interface from the Iron Man films and the matching View Assist dashboard. The tile now ships in three display variants so you can pick the best look for each screen.
 
 ## What It Shows
 
 A reactor-style avatar that reacts in real-time to your voice interactions:
 
-| State | Ring | Core | Pulse Speed | Animation |
-|-------|------|------|-------------|-----------|
-| **Idle** | Cyan | Medium | 2s slow | Gentle glow |
-| **Listening** | Green | Bright | 0.8s fast | Ring counter-rotation |
-| **Processing** | Amber | Warm | 0.6s rapid | Spinning ring |
-| **Speaking** | Cyan | White-hot | 0.4s quick | Voice bars active |
-| **Error** | Red | Dim | 1.2s erratic | Blinking status dot |
-| **Wake** | Green | Flash | 0.3s burst | Bright flash |
-| **Sleep** | Dark | Dim | 4s very slow | Purple status dot |
+| State | Colour | Animation |
+|-------|--------|-----------|
+| **Idle** | Cyan | Slow, gentle pulse |
+| **Listening** | Green | Faster pulse / ring activity |
+| **Processing** | Amber | Rapid pulse or ring motion |
+| **Speaking** | White-hot cyan | Voice bars active |
+| **Error** | Red | Blinking status dot |
+| **Wake** | Bright green | Flare / intense pulse |
+| **Sleep** | Purple | Very slow dim pulse |
 
-The avatar features:
-- **Concentric rings**: outer glow ring, middle rotating ring, inner accent ring
-- **Pulsing core**: central reactor sphere with radial gradient simulation
-- **Ambient glow**: soft background halo matching the state colour
-- **Status dot**: small indicator at the bottom showing current state
-- **Voice visualiser**: 5 bars appearing when speaking
+## Display variants
 
-## Colours
+Choose one per tile in the Tessera layout editor:
 
-Matching the View Assist dashboard reactor design:
-- Primary cyan: `#00D4FF`
-- Core inner: `#AADDFF`
-- Core outer: `#002244`
-- Dim ring: `#0088AA`
+| Variant | Best for | How it works |
+|---|---|---|
+| **Reactor** (default) | Any screen | The original concentric-ring LVGL reactor. Busy, detailed, state-aware. |
+| **HUD** | Square screens (e.g. Guition 480×480) or dark dashboards | A cleaner, View-Assist-style face: dark HUD background, subtle scanlines, glowing ring and pulsing core. Matches the look of `jarvis-home.html`. |
+| **Image** | Larger or landscape screens (e.g. CrowPanel 1024×600) | Loads a picture (such as the `jarvis-ui.gif` used on the dashboard) and overlays a state-coloured border and status dot. Note: Tessera's picture API treats images as static, so animated GIFs will show their first frame only. |
 
 ## Installation
 
-Requires **Tessera dev branch** (plugin API 0.10) as of now.
+Requires **Tessera dev branch** (plugin API 0.10).
 
 1. In Tessera, open **Plugins → Add with a link**
-2. Paste: `https:…Code`
+2. Paste your plugin repository URL
 3. Add **JARVIS Avatar** to your screen; the screen builds once
 4. In **Layout**, place the Avatar tile from the library's Plugins group
 
@@ -46,9 +41,7 @@ Requires **Tessera dev branch** (plugin API 0.10) as of now.
 
 ### 1. Create a Voice State Helper in Home Assistant
 
-Go to **Settings → Devices & Services → Helpers → Text** and create an `input_text` helper.
-
-Name it something like `input_text.jarvis_voice_state`.
+Go to **Settings → Devices & Services → Helpers → Text** and create an `input_text` helper, e.g. `input_text.jarvis_voice_state`.
 
 ### 2. Update the Helper via Automations
 
@@ -100,34 +93,46 @@ action:
 In the Tessera layout editor, select the JARVIS Avatar tile and set:
 
 - **Voice state entity**: `input_text.jarvis_voice_state` (or your helper)
-- **Avatar style**: Reactor (Iron Man), Minimal circle, or Hexagonal
+- **Display variant**: `reactor`, `hud`, or `image`
 - **Tap to wake**: Enable to play a wake animation on touch
 
-## How It Works
+For the **image** variant:
 
-- The tile polls Home Assistant every 2 seconds (configurable) for the voice state helper's value
-- The reactor transitions smoothly between states with LVGL animations
-- Ring rotation, core pulsing, and glow effects are all hardware-accelerated
-- All processing stays local on the screen; no cloud connections
+- **Image URL**: the address Tessera should load.
+  - For a file in Home Assistant's `www/` folder, use `/local/jarvis-ui.gif`.
+  - For a public URL, the host must be listed under the plugin's `permissions.network` in `tessera-plugin.yaml`.
+  - Note: private LAN IPs are not supported by `permissions.network`; use a public hostname or Home Assistant `/local/`.
+- **Image fit**: `cover` fills the tile; `contain` shows the whole image (recommended for the 16:9 GIF on a square tile).
+
+To use the existing dashboard GIF, copy or symlink it to Home Assistant `www/` if it is not already there:
+
+```bash
+cp /config/www/jarvis-ui.gif /config/www/jarvis-ui.gif
+```
+
+Then set the tile URL to `/local/jarvis-ui.gif`.
 
 ## File Structure
 
 ```
-components/jarvis_avatar/
+components/jarvis_reactor/
 ├── __init__.py              # ESPHome component registration
-├── jarvis_model.h           # Voice state enum, parsing, demo cycling
-├── jarvis_avatar.h          # Avatar class interface
-├── jarvis_avatar.cpp        # LVGL reactor drawing & animation engine
-├── jarvis_plugin.h          # Plugin class header
-└── jarvis_plugin.cpp        # HA polling, tile lifecycle, touch handling
-plugin.yaml                  # Screen-level settings
-tessera-plugin.yaml          # Tile options & sizes
+├── jarvis_reactor.h         # Plugin class interface
+└── jarvis_reactor.cpp       # Avatar tile engine + three painters
+tessera-plugin.yaml          # Manifest: tiles, options, pictures
+plugin.yaml                  # Screen-level component
 translations/en.json         # UI strings
 ```
 
+## How It Works
+
+- The tile polls Home Assistant every few seconds for the voice state helper's value
+- The chosen painter transitions smoothly between states with LVGL animations
+- All processing stays local on the screen; no cloud connections
+
 ## Credit
 
-Architecture heavily inspired by [tessera-Microplant](https://github.com/alexscemo/tessera-Microplant) by alexscemo — a beautifully crafted plant monitoring tile that demonstrates the Tessera plugin API patterns.
+Architecture heavily inspired by [tessera-Microplant](https://github.com/alexscemo/tessera-Microplant) by alexscemo.
 
 Reactor visual design inspired by the JARVIS dashboard for View Assist.
 

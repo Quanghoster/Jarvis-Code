@@ -1,7 +1,7 @@
 # The manifest: who made the plugin, what it may do, and what the Tessera app shows.
 # Every field is explained in docs/MANIFEST.md.
 id: jarvis_reactor
-version: 0.1.0
+version: 0.2.0
 api: "0.10"
 icon: circle-user
 maintainer: quanghoster
@@ -21,12 +21,18 @@ tiles:
     memory: 2400
     domains: [input_text, sensor]
     attributes: [state]
+    pictures: 1
     example: tile_example
     options:
       - { id: entity, kind: text, label: entity, hint: entity_hint }
-      - { id: style, kind: choice, label: style, hint: style_hint, default: reactor, choices: [
-          { value: reactor, label: style_reactor },
-          { value: minimal, label: style_minimal },
-          { value: hex, label: style_hex }
+      - { id: variant, kind: choice, label: variant, hint: variant_hint, default: reactor, choices: [
+          { value: reactor, label: variant_reactor },
+          { value: hud, label: variant_hud },
+          { value: image, label: variant_image }
+        ]}
+      - { id: url, kind: text, label: url, hint: url_hint }
+      - { id: fit, kind: choice, label: fit, hint: fit_hint, default: contain, choices: [
+          { value: cover, label: fit_cover },
+          { value: contain, label: fit_contain }
         ]}
       - { id: tappable, kind: toggle, label: tappable, hint: tappable_hint, default: true }
