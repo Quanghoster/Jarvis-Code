@@ -58,6 +58,7 @@ class AvatarPainter {
   virtual ~AvatarPainter() = default;
   virtual void create(const tessera::TileContext &c, const tessera::Plugin *plugin) = 0;
   virtual void on_state(VoiceState state) = 0;
+  virtual void on_data(JsonObjectConst data) {}
   virtual void on_tick(uint32_t epoch) = 0;
   virtual void on_theme() = 0;
   virtual void on_tap() {}
@@ -86,7 +87,6 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(bg_, width_, height_);
     lv_obj_set_pos(bg_, 0, 0);
 
-    // Central core
     core_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(core_);
     lv_obj_remove_flag(core_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -99,7 +99,6 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(core_, core_d, core_d);
     lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2);
 
-    // Core highlight
     highlight_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(highlight_);
     lv_obj_remove_flag(highlight_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -110,7 +109,6 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(highlight_, hl_d, hl_d);
     lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(4 * s), cy - hl_d / 2 - static_cast<int>(10 * s));
 
-    // J.A.R.V.I.S. text
     tessera::Font title_font = (size >= 200) ? tessera::Font::HEADLINE :
                                (size >= 100) ? tessera::Font::TITLE :
                                tessera::Font::BODY;
@@ -122,7 +120,6 @@ class ReactorPainter : public AvatarPainter {
     const int text_y = cy - ui::line_height(title_font) / 2;
     lv_obj_set_pos(title_, 0, text_y);
 
-    // Status dot
     status_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(status_);
     lv_obj_remove_flag(status_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -134,7 +131,6 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(status_, sd_d, sd_d);
     lv_obj_set_pos(status_, cx - sd_d / 2, cy - static_cast<int>(size * 0.42f));
 
-    // Voice visualiser bars
     const int bar_w = std::max(2, static_cast<int>(3 * s));
     const int bar_gap = std::max(3, static_cast<int>(5 * s));
     for (int i = 0; i < 5; ++i) {
@@ -291,7 +287,6 @@ class HudPainter : public AvatarPainter {
     lv_obj_set_size(bg_, width_, height_);
     lv_obj_set_pos(bg_, 0, 0);
 
-    // Subtle scanline overlay
     for (int i = 0; i < 8; ++i) {
       scanlines_[i] = lv_obj_create(c.parent);
       lv_obj_remove_style_all(scanlines_[i]);
@@ -303,7 +298,6 @@ class HudPainter : public AvatarPainter {
       lv_obj_set_pos(scanlines_[i], 0, static_cast<int>((height_ * 0.2f) + i * height_ * 0.075f));
     }
 
-    // Outer glow ring
     ring_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(ring_);
     lv_obj_remove_flag(ring_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -319,7 +313,6 @@ class HudPainter : public AvatarPainter {
     lv_obj_set_size(ring_, ring_d, ring_d);
     lv_obj_set_pos(ring_, cx - ring_d / 2, cy - ring_d / 2 - static_cast<int>(6 * s));
 
-    // Central core
     core_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(core_);
     lv_obj_remove_flag(core_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -332,7 +325,6 @@ class HudPainter : public AvatarPainter {
     lv_obj_set_size(core_, core_d, core_d);
     lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2 - static_cast<int>(6 * s));
 
-    // Core highlight
     highlight_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(highlight_);
     lv_obj_remove_flag(highlight_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -343,7 +335,6 @@ class HudPainter : public AvatarPainter {
     lv_obj_set_size(highlight_, hl_d, hl_d);
     lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(3 * s), cy - hl_d / 2 - static_cast<int>(8 * s));
 
-    // Status dot
     status_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(status_);
     lv_obj_remove_flag(status_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -355,7 +346,6 @@ class HudPainter : public AvatarPainter {
     lv_obj_set_size(status_, sd, sd);
     lv_obj_set_pos(status_, cx - sd / 2, cy + static_cast<int>(size * 0.42f));
 
-    // Title
     tessera::Font title_font = (size >= 200) ? tessera::Font::HEADLINE :
                                (size >= 100) ? tessera::Font::TITLE :
                                tessera::Font::BODY;
@@ -366,7 +356,6 @@ class HudPainter : public AvatarPainter {
     ui::set_text(title_, "J.A.R.V.I.S.");
     lv_obj_set_pos(title_, 0, cy + static_cast<int>(size * 0.46f) - ui::line_height(title_font) / 2);
 
-    // State label (only on larger tiles)
     state_label_ = ui::label(c.parent, Font::BODY, theme::INK_SOFT);
     lv_obj_set_width(state_label_, width_);
     lv_obj_set_style_text_align(state_label_, LV_TEXT_ALIGN_CENTER, 0);
@@ -378,7 +367,6 @@ class HudPainter : public AvatarPainter {
       lv_obj_add_flag(state_label_, LV_OBJ_FLAG_HIDDEN);
     }
 
-    // Voice bars
     const int bar_w = std::max(2, static_cast<int>(3 * s));
     const int bar_gap = std::max(3, static_cast<int>(5 * s));
     for (int i = 0; i < 5; ++i) {
@@ -593,9 +581,6 @@ class ImagePainter : public AvatarPainter {
       picture_ = ui::picture(c.parent);
       lv_obj_set_size(picture_, width_, height_);
       lv_obj_set_pos(picture_, 0, 0);
-      if (!url_.empty()) {
-        ui::set_picture(picture_, url_.c_str(), fit_);
-      }
     } else {
       fallback_ = ui::label(c.parent, Font::BODY, theme::MUTED);
       lv_obj_set_width(fallback_, width_);
@@ -604,7 +589,6 @@ class ImagePainter : public AvatarPainter {
       lv_obj_set_pos(fallback_, 0, (height_ - ui::line_height(Font::BODY)) / 2);
     }
 
-    // State-coloured border overlay
     border_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(border_);
     lv_obj_remove_flag(border_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -616,7 +600,6 @@ class ImagePainter : public AvatarPainter {
     lv_obj_set_size(border_, width_, height_);
     lv_obj_set_pos(border_, 0, 0);
 
-    // Status dot
     status_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(status_);
     lv_obj_remove_flag(status_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -638,6 +621,10 @@ class ImagePainter : public AvatarPainter {
     }
   }
 
+  void on_data(JsonObjectConst data) override {
+    load_picture(data);
+  }
+
   void on_tick(uint32_t epoch) override {
     if (!epoch) return;
     if (state_ == VoiceState::ERROR && (epoch % 2 == 0)) {
@@ -654,6 +641,21 @@ class ImagePainter : public AvatarPainter {
   }
 
  private:
+  void load_picture(JsonObjectConst data) {
+    if (!picture_) return;
+
+    std::string src;
+    if (!url_.empty()) {
+      src = url_;
+    } else if (data["attributes"]["entity_picture"].is<const char*>()) {
+      src = data["attributes"]["entity_picture"].as<const char*>();
+    }
+
+    if (!src.empty()) {
+      ui::set_picture(picture_, src.c_str(), fit_);
+    }
+  }
+
   void apply_state(VoiceState state) {
     lv_color_t col = CYAN;
     lv_opa_t border_opa = LV_OPA_60;
@@ -668,10 +670,6 @@ class ImagePainter : public AvatarPainter {
       case VoiceState::SLEEP: col = PURPLE; border_opa = LV_OPA_40; break;
       case VoiceState::UNKNOWN:
       default: col = RING_DIM; border_opa = LV_OPA_30; break;
-    }
-
-    if (picture_ && !url_.empty()) {
-      ui::set_picture(picture_, url_.c_str(), fit_);
     }
 
     lv_obj_set_style_border_color(border_, col, 0);
@@ -721,7 +719,10 @@ class AvatarTile : public tessera::Tile {
       new_state = parse_state(data["state"]);
     }
     state_ = new_state;
-    if (painter_) painter_->on_state(state_);
+    if (painter_) {
+      painter_->on_state(state_);
+      painter_->on_data(data);
+    }
   }
 
   void on_tick(uint32_t epoch) override {
