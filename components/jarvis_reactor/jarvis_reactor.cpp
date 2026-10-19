@@ -64,7 +64,7 @@ class AvatarPainter {
 };
 
 // ============================================================================
-// ReactorPainter: concentric rings and pulsing core (original style)
+// ReactorPainter: pulsing core reactor (no concentric arcs)
 // ============================================================================
 class ReactorPainter : public AvatarPainter {
  public:
@@ -86,80 +86,7 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(bg_, width_, height_);
     lv_obj_set_pos(bg_, 0, 0);
 
-    arc4_ = lv_arc_create(c.parent);
-    lv_obj_remove_flag(arc4_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_arc_set_range(arc4_, 0, 360);
-    lv_arc_set_value(arc4_, 280);
-    lv_arc_set_bg_angles(arc4_, 30, 310);
-    lv_obj_set_style_arc_color(arc4_, RING_DIM, 0);
-    lv_obj_set_style_arc_width(arc4_, std::max(1, static_cast<int>(1 * s)), 0);
-    lv_obj_set_style_arc_opa(arc4_, LV_OPA_30, 0);
-    lv_obj_set_size(arc4_, static_cast<lv_coord_t>(size * 0.90f), static_cast<lv_coord_t>(size * 0.90f));
-    lv_obj_set_pos(arc4_, cx - static_cast<lv_coord_t>(size * 0.45f), cy - static_cast<lv_coord_t>(size * 0.45f));
-
-    arc3_ = lv_arc_create(c.parent);
-    lv_obj_remove_flag(arc3_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_arc_set_range(arc3_, 0, 360);
-    lv_arc_set_value(arc3_, 340);
-    lv_arc_set_bg_angles(arc3_, 10, 350);
-    lv_obj_set_style_arc_color(arc3_, RING_BORDER, 0);
-    lv_obj_set_style_arc_width(arc3_, std::max(1, static_cast<int>(1.5f * s)), 0);
-    lv_obj_set_style_arc_opa(arc3_, LV_OPA_50, 0);
-    lv_obj_set_size(arc3_, static_cast<lv_coord_t>(size * 0.76f), static_cast<lv_coord_t>(size * 0.76f));
-    lv_obj_set_pos(arc3_, cx - static_cast<lv_coord_t>(size * 0.38f), cy - static_cast<lv_coord_t>(size * 0.38f));
-
-    for (int i = 0; i < 12; ++i) {
-      ticks_[i] = lv_obj_create(c.parent);
-      lv_obj_remove_style_all(ticks_[i]);
-      lv_obj_remove_flag(ticks_[i], static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-      lv_obj_set_style_radius(ticks_[i], LV_RADIUS_CIRCLE, 0);
-      lv_obj_set_style_bg_color(ticks_[i], RING_DIM, 0);
-      lv_obj_set_style_bg_opa(ticks_[i], LV_OPA_40, 0);
-      const int td = std::max(2, static_cast<int>(1.5f * s));
-      lv_obj_set_size(ticks_[i], td, td);
-      float angle = (i * 30.0f) * 3.14159f / 180.0f;
-      int tx = cx + static_cast<int>((size * 0.38f) * cos(angle)) - td / 2;
-      int ty = cy + static_cast<int>((size * 0.38f) * sin(angle)) - td / 2;
-      lv_obj_set_pos(ticks_[i], tx, ty);
-    }
-
-    arc2_ = lv_arc_create(c.parent);
-    lv_obj_remove_flag(arc2_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_arc_set_range(arc2_, 0, 360);
-    lv_arc_set_value(arc2_, 300);
-    lv_arc_set_bg_angles(arc2_, 45, 315);
-    lv_obj_set_style_arc_color(arc2_, CYAN, 0);
-    lv_obj_set_style_arc_width(arc2_, std::max(1, static_cast<int>(1.5f * s)), 0);
-    lv_obj_set_style_arc_opa(arc2_, LV_OPA_60, 0);
-    lv_obj_set_size(arc2_, static_cast<lv_coord_t>(size * 0.62f), static_cast<lv_coord_t>(size * 0.62f));
-    lv_obj_set_pos(arc2_, cx - static_cast<lv_coord_t>(size * 0.31f), cy - static_cast<lv_coord_t>(size * 0.31f));
-
-    for (int i = 0; i < 6; ++i) {
-      hex_dots_[i] = lv_obj_create(c.parent);
-      lv_obj_remove_style_all(hex_dots_[i]);
-      lv_obj_remove_flag(hex_dots_[i], static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-      lv_obj_set_style_radius(hex_dots_[i], LV_RADIUS_CIRCLE, 0);
-      lv_obj_set_style_bg_color(hex_dots_[i], CYAN, 0);
-      lv_obj_set_style_bg_opa(hex_dots_[i], LV_OPA_80, 0);
-      const int hd = std::max(2, static_cast<int>(2.5f * s));
-      lv_obj_set_size(hex_dots_[i], hd, hd);
-      float angle = (i * 60.0f + 45.0f) * 3.14159f / 180.0f;
-      int hx = cx + static_cast<int>((size * 0.31f) * cos(angle)) - hd / 2;
-      int hy = cy + static_cast<int>((size * 0.31f) * sin(angle)) - hd / 2;
-      lv_obj_set_pos(hex_dots_[i], hx, hy);
-    }
-
-    arc1_ = lv_arc_create(c.parent);
-    lv_obj_remove_flag(arc1_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
-    lv_arc_set_range(arc1_, 0, 360);
-    lv_arc_set_value(arc1_, 270);
-    lv_arc_set_bg_angles(arc1_, 0, 270);
-    lv_obj_set_style_arc_color(arc1_, CYAN, 0);
-    lv_obj_set_style_arc_width(arc1_, std::max(1, static_cast<int>(1.5f * s)), 0);
-    lv_obj_set_style_arc_opa(arc1_, LV_OPA_70, 0);
-    lv_obj_set_size(arc1_, static_cast<lv_coord_t>(size * 0.48f), static_cast<lv_coord_t>(size * 0.48f));
-    lv_obj_set_pos(arc1_, cx - static_cast<lv_coord_t>(size * 0.24f), cy - static_cast<lv_coord_t>(size * 0.24f));
-
+    // Central core
     core_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(core_);
     lv_obj_remove_flag(core_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -172,6 +99,7 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(core_, core_d, core_d);
     lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2);
 
+    // Core highlight
     highlight_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(highlight_);
     lv_obj_remove_flag(highlight_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -182,6 +110,7 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(highlight_, hl_d, hl_d);
     lv_obj_set_pos(highlight_, cx - hl_d / 2 - static_cast<int>(4 * s), cy - hl_d / 2 - static_cast<int>(10 * s));
 
+    // J.A.R.V.I.S. text
     tessera::Font title_font = (size >= 200) ? tessera::Font::HEADLINE :
                                (size >= 100) ? tessera::Font::TITLE :
                                tessera::Font::BODY;
@@ -193,6 +122,7 @@ class ReactorPainter : public AvatarPainter {
     const int text_y = cy - ui::line_height(title_font) / 2;
     lv_obj_set_pos(title_, 0, text_y);
 
+    // Status dot
     status_ = lv_obj_create(c.parent);
     lv_obj_remove_style_all(status_);
     lv_obj_remove_flag(status_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
@@ -204,6 +134,7 @@ class ReactorPainter : public AvatarPainter {
     lv_obj_set_size(status_, sd_d, sd_d);
     lv_obj_set_pos(status_, cx - sd_d / 2, cy - static_cast<int>(size * 0.42f));
 
+    // Voice visualiser bars
     const int bar_w = std::max(2, static_cast<int>(3 * s));
     const int bar_gap = std::max(3, static_cast<int>(5 * s));
     for (int i = 0; i < 5; ++i) {
@@ -235,16 +166,11 @@ class ReactorPainter : public AvatarPainter {
     const float breathe = 0.93f + 0.07f * sin(phase);
 
     const int core_base = std::min(width_, height_);
-    const float s = core_base / 240.0f;
     const int core_d = static_cast<int>(core_base * 0.35f * breathe);
     const int cx = width_ / 2;
     const int cy = height_ / 2;
     lv_obj_set_size(core_, core_d, core_d);
     lv_obj_set_pos(core_, cx - core_d / 2, cy - core_d / 2);
-
-    lv_obj_set_style_arc_opa(arc1_, static_cast<lv_opa_t>(LV_OPA_50 + LV_OPA_20 * sin(phase)), 0);
-    lv_obj_set_style_arc_opa(arc2_, static_cast<lv_opa_t>(LV_OPA_40 + LV_OPA_20 * sin(phase + 1.0f)), 0);
-    lv_obj_set_style_arc_opa(arc3_, static_cast<lv_opa_t>(LV_OPA_30 + LV_OPA_20 * sin(phase + 2.0f)), 0);
 
     if (state_ == VoiceState::SPEAKING) {
       for (int i = 0; i < 5; ++i) {
@@ -269,78 +195,60 @@ class ReactorPainter : public AvatarPainter {
 
  private:
   void apply_state(VoiceState state) {
-    lv_color_t arc_col = RING_BORDER;
     lv_color_t core_col = CORE_MID;
     lv_color_t status_col = OFF;
     lv_opa_t core_opa = LV_OPA_80;
 
     switch (state) {
       case VoiceState::IDLE:
-        arc_col = RING_BORDER;
         core_col = CORE_MID;
         status_col = CYAN_DIM;
         core_opa = LV_OPA_80;
         break;
       case VoiceState::LISTENING:
-        arc_col = GREEN;
         core_col = GREEN;
         status_col = GREEN;
         core_opa = LV_OPA_100;
         break;
       case VoiceState::PROCESSING:
-        arc_col = AMBER;
         core_col = AMBER;
         status_col = AMBER;
         core_opa = LV_OPA_90;
         break;
       case VoiceState::SPEAKING:
-        arc_col = CYAN;
         core_col = CORE_INNER;
         status_col = CYAN;
         core_opa = LV_OPA_100;
         break;
       case VoiceState::ERROR:
-        arc_col = RED;
         core_col = RED;
         status_col = RED;
         core_opa = LV_OPA_70;
         break;
       case VoiceState::WAKE:
-        arc_col = GREEN;
         core_col = CORE_INNER;
         status_col = GREEN;
         core_opa = LV_OPA_100;
         break;
       case VoiceState::SLEEP:
-        arc_col = OFF;
         core_col = OFF;
         status_col = PURPLE;
         core_opa = LV_OPA_30;
         break;
       case VoiceState::UNKNOWN:
       default:
-        arc_col = RING_DIM;
         core_col = OFF;
         status_col = OFF;
         core_opa = LV_OPA_50;
         break;
     }
 
-    lv_obj_set_style_arc_color(arc1_, arc_col, 0);
-    lv_obj_set_style_arc_color(arc2_, arc_col, 0);
-    lv_obj_set_style_arc_color(arc3_, arc_col, 0);
-    lv_obj_set_style_arc_color(arc4_, arc_col, 0);
-
-    lv_obj_set_style_shadow_color(core_, arc_col, 0);
+    lv_obj_set_style_shadow_color(core_, core_col, 0);
     lv_obj_set_style_bg_color(core_, core_col, 0);
     lv_obj_set_style_bg_color(highlight_, core_col, 0);
     lv_obj_set_style_bg_color(status_, status_col, 0);
     lv_obj_set_style_shadow_color(status_, status_col, 0);
     lv_obj_set_style_bg_opa(core_, core_opa, 0);
-
-    for (auto *dot : hex_dots_) {
-      lv_obj_set_style_bg_color(dot, arc_col, 0);
-    }
 
     for (auto *bar : bars_) {
       lv_obj_set_style_opa(bar, (state == VoiceState::SPEAKING) ? LV_OPA_80 : LV_OPA_TRANSP, 0);
@@ -353,12 +261,6 @@ class ReactorPainter : public AvatarPainter {
   int width_ = 0, height_ = 0;
   VoiceState state_ = VoiceState::IDLE;
   lv_obj_t *bg_{};
-  lv_obj_t *arc1_{};
-  lv_obj_t *arc2_{};
-  lv_obj_t *arc3_{};
-  lv_obj_t *arc4_{};
-  lv_obj_t *ticks_[12]{};
-  lv_obj_t *hex_dots_[6]{};
   lv_obj_t *core_{};
   lv_obj_t *highlight_{};
   lv_obj_t *title_{};
