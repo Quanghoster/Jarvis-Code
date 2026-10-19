@@ -657,6 +657,9 @@ class ImagePainter : public AvatarPainter {
 
     if (!src.empty()) {
       ui::set_picture(picture_, src.c_str(), fit_);
+      // Re-apply tile size after source load in case LVGL auto-sized to native image
+      lv_obj_set_size(picture_, width_, height_);
+      lv_obj_set_pos(picture_, 0, 0);
     }
   }
 
