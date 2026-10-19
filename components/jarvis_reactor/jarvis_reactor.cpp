@@ -421,8 +421,10 @@ class HudPainter : public AvatarPainter {
     lv_obj_set_size(ring_, ring_d, ring_d);
     lv_obj_set_pos(ring_, cx - ring_d / 2, cy - ring_d / 2 - static_cast<int>(6 * s));
 
-    lv_obj_set_style_border_opa(ring_, static_cast<lv_opa_t>(static_cast<int>(LV_OPA_50) + static_cast<int>(LV_OPA_20 * sin(phase)))), 0);
-    lv_obj_set_style_shadow_opa(ring_, static_cast<lv_opa_t>(static_cast<int>(LV_OPA_30) + static_cast<int>(LV_OPA_20 * sin(phase + 0.5f)))), 0);
+    const int border_opa = static_cast<int>(LV_OPA_50) + static_cast<int>(static_cast<int>(LV_OPA_20) * sin(phase));
+    const int shadow_opa = static_cast<int>(LV_OPA_30) + static_cast<int>(static_cast<int>(LV_OPA_20) * sin(phase + 0.5f));
+    lv_obj_set_style_border_opa(ring_, static_cast<lv_opa_t>(border_opa), 0);
+    lv_obj_set_style_shadow_opa(ring_, static_cast<lv_opa_t>(shadow_opa), 0);
 
     if (state_ == VoiceState::SPEAKING) {
       for (int i = 0; i < 5; ++i) {
