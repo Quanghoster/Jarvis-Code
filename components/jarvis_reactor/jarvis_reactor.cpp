@@ -579,8 +579,11 @@ class ImagePainter : public AvatarPainter {
 
     if (ui::pictures()) {
       picture_ = ui::picture(c.parent);
+      lv_obj_remove_flag(picture_, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+      lv_obj_set_style_pad_all(picture_, 0, 0);
       lv_obj_set_size(picture_, width_, height_);
       lv_obj_set_pos(picture_, 0, 0);
+      lv_img_set_size_mode(picture_, LV_IMG_SIZE_MODE_REAL);
     } else {
       fallback_ = ui::label(c.parent, Font::BODY, theme::MUTED);
       lv_obj_set_width(fallback_, width_);
